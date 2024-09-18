@@ -9,12 +9,11 @@ end entity cordic_tb;
 
 architecture cordic_tb_arq of cordic_tb is
 
-    constant N : natural := 16;
+    constant N : natural := 20;
     constant FILE_PATH  : string := "Datos.txt";
     
     signal clk : std_logic := '0';
     signal rst : std_logic := '0';
-    signal req : std_logic := '0';
     signal rot0_vec1 : std_logic := '0';
     signal x_in,y_in,z_in : signed(N+1 downto 0);
     signal x_out,y_out,z_out : signed(N+1 downto 0);
