@@ -1,15 +1,20 @@
 @echo off
 
-if exist work\ (
-    rmdir /s /q work
+if exist build\ (
+    rmdir /s /q build
 ) 
-mkdir work
+mkdir build
 
-@REM Syntax
-ghdl -s --workdir=work UART_CORDIC/*.vhd
-ghdl -s --workdir=work uart_cordic.vhd
-@REM Análisis
-ghdl -a --workdir=work UART_CORDIC/*.vhd
-ghdl -a --workdir=work uart_cordic.vhd
+@REM UART_CORDIC
+ghdl -a --workdir=build UART_CORDIC/meta_harden.vhd
+ghdl -a --workdir=build UART_CORDIC/uart_baud_gen.vhd
+ghdl -a --workdir=build UART_CORDIC/uart_rx_ctl.vhd
+ghdl -a --workdir=build UART_CORDIC/uart_rx.vhd
+ghdl -a --workdir=build UART_CORDIC/cordic_ctl_utils.vhd
+ghdl -a --workdir=build UART_CORDIC/cordic_ctl.vhd
+
+@REM GENERAL
+ghdl -a --workdir=build uart_cordic.vhd
+
 @REM Run
-ghdl -r --workdir=work uart_cordic --vcd=work/uart_cordic.vcd
+ghdl -r --workdir=build uart_cordic --vcd=build/uart_cordic.vcd

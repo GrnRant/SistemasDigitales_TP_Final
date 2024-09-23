@@ -3,7 +3,7 @@
 --  Copyright (c) 2009 Xilinx Inc.
 --
 --  Project  : Programmable Wave Generator
---  Module   : uart_led.vhd
+--  Module   : cordic_ctl.vhd
 --  Parent   : None
 --  Children : uart_rx.vhd led_ctl.vhd 
 --
@@ -25,7 +25,10 @@ library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
 
-entity uart_led is
+library work;
+use work.cordic_ctl_utils_package.all;
+
+entity cordic_ctl is
 	generic (
 		BAUD_RATE : integer := 115200;
 		CLOCK_RATE : integer := 50E6;
@@ -43,7 +46,7 @@ entity uart_led is
 	);
 end;
 
-architecture uart_led_arq of uart_led is
+architecture cordic_ctl_arq of cordic_ctl is
 
 	component meta_harden is
 		port (
@@ -81,6 +84,9 @@ architecture uart_led_arq of uart_led is
 	signal rx_data : std_logic_vector(7 downto 0); -- Data output of uart_rx
 	signal rx_data_rdy : std_logic; -- Data ready output of uart_rx
 
+    signal current_state : cordic_ctl_states := S0;
+	signal cmd : cordic_ctl_cmds := CMD_NONE; 
+
 begin
 	-- Metastability harden the rst - this is an asynchronous input to the
 	-- system (from a pushbutton), and is used in synchronous logic. Therefore
@@ -111,5 +117,121 @@ begin
 		frm_err => open
 	);
 
+	CORDIC_CTL_PROCESS: process(rx_data_rdy)
+	begin
+	if(rising_edge(rx_data_rdy)) and cmd = CMD_NONE then
+		C_SEMF : case current_state is
+			when S0 =>
+				if rx_data = R_CHAR then
+					current_state <= S_R;
+				end if;
+				cmd <= CMD_NONE;
+			when S_R =>
+				if rx_data = O_CHAR then
+					current_state <= S_O;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_O =>
+				if rx_data = T_CHAR then
+					current_state <= S_T;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_T =>
+				if rx_data = SPC_CHAR then
+					current_state <= S_SPC;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_SPC =>
+				if rx_data = C_CHAR then
+					current_state <= S_C;
+				elsif rx_data = A_CHAR then
+					current_state <= S_C;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_C =>
+				if rx_data = SPC_CHAR then
+					current_state <= S_SPC_C;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_A =>
+				if rx_data = SPC_CHAR then
+					current_state <= S_SPC_A;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_SPC_C =>
+				if rx_data = H_CHAR then
+					current_state <= S_C_H;
+				elsif rx_data = A_CHAR then
+					current_state <= S_C_A;
+				else
+					current_state <= S0;
+				end if;
+				cmd <= CMD_NONE;
+			when S_SPC_A =>
+				if (unsigned(rx_data) >= to_unsigned(48, 7)) and (unsigned(rx_data) <= to_unsigned(48, 7)) then
+					current_state <= S_NUM1;
+				else
+					current_state <= S0;	
+				end if;
+				cmd <= CMD_NONE;
+			when S_C_H =>
+				if rx_data = NEW_LINE_CHAR then
+					cmd <= CMD_C_H;
+				else
+					cmd <= CMD_NONE;	
+				end if;
+				current_state <= S0;
+			when S_C_A =>
+				if rx_data = NEW_LINE_CHAR then
+					cmd <= CMD_C_A;
+				else
+					cmd <= CMD_NONE;	
+				end if;
+				current_state <= S0;
+			when S_NUM1 =>
+				if (unsigned(rx_data) >= to_unsigned(48, 7)) and (unsigned(rx_data) <= to_unsigned(48, 7)) then
+					current_state <= S_NUM2;
+					cmd <= CMD_NONE;
+				elsif rx_data = NEW_LINE_CHAR then
+					current_state <= S0;
+					cmd <= CMD_A;
+				else
+					current_state <= S0;
+					cmd <= CMD_NONE;
+				end if;
+			when S_NUM2 =>
+			if (unsigned(rx_data) >= to_unsigned(48, 7)) and (unsigned(rx_data) <= to_unsigned(48, 7)) then
+				current_state <= S_NUM3;
+				cmd <= CMD_NONE;
+			elsif rx_data = NEW_LINE_CHAR then
+				current_state <= S0;
+				cmd <= CMD_A;
+			else
+				current_state <= S0;
+				cmd <= CMD_NONE;
+			end if;
+			when S_NUM3 =>
+				if rx_data = NEW_LINE_CHAR then
+					cmd <= CMD_A;
+				else
+					cmd <= CMD_NONE;
+				end if;
+				current_state <= S0;
+		end case;
+
+	end if;
+	end process;
 	
 end;
