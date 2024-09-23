@@ -10,7 +10,7 @@ use work.utils.all;
 
 entity cordic is
     --N cantidad de bits para cuentas, ITERATIONS cantidad de iteraciones, N_CONT bits del contador elegido 
-    --en función de la cantidad de ITERATIONS (no debe superares) y FRAC cantidad de decimales en cuentas
+    --en función de la cantidad de ITERATIONS (no debe superarse) y FRAC cantidad de decimales en cuentas
     --(es decir cantidad de bits de la parte fraccionaria de los números en binario)  
     generic(N: natural := 16; N_CONT : natural := 4; ITERATIONS: natural := 15; FRAC: natural := 2);
     port(x0 : in signed(N+1 downto 0);  --Valor de entrada al cordic

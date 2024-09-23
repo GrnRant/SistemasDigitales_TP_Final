@@ -4,7 +4,7 @@
 -- 
 -- Create Date: 10/19/2015 10:24:29 AM
 -- Design Name: 
--- Module Name: uart_top
+-- Module Name: uart_cordic
 -- Project Name: 
 -- Target Devices: 
 -- Tool Versions: 
@@ -20,8 +20,12 @@
 
 library IEEE;
 use IEEE.std_logic_1164.all;
+use IEEE.numeric_std.all;
 
-entity uart_top is
+entity uart_cordic is
+	generic(
+		N: natural := 16
+	);
 	port(
 		--Write side inputs
 		clk_pin: in std_logic;		-- Clock input (from pin)
@@ -33,7 +37,12 @@ entity uart_top is
 end;
 	
 
-architecture uart_top_arq of uart_top is
+architecture uart_cordic_arq of uart_cordic is
+
+	--Inputs al cordic      					
+	signal x_cordic_in: signed(N + 1 downto 0); --Valor de entrada al cordic
+	signal y_cordic_in: signed(N + 1 downto 0); --Valor de entrada al cordic
+	signal z_cordic_in: signed(N + 1 downto 0);  --Valor de entrada al cordic
 
 	component uart_led is
 		generic(
@@ -44,9 +53,11 @@ architecture uart_top_arq of uart_top is
 			-- Write side inputs
 			clk_pin:	in std_logic;      					-- Clock input (from pin)
 			rst_pin: 	in std_logic;      					-- Active HIGH reset (from pin)
-			btn_pin: 	in std_logic;      					-- Button to swap high and low bits
 			rxd_pin: 	in std_logic;      					-- RS232 RXD pin - directly from pin
-			led_pins: 	out std_logic_vector(7 downto 0)    -- 8 LED outputs
+			--Inputs al cordic      					
+			x_cordic_in: out signed(N + 1 downto 0); --Valor de entrada al cordic
+			y_cordic_in: out signed(N + 1 downto 0); --Valor de entrada al cordic
+			z_cordic_in: out signed(N + 1 downto 0)  --Valor de entrada al cordic
 		);
 	end component;
 
@@ -60,8 +71,10 @@ begin
 		port map(
 			clk_pin => clk_pin,  	-- Clock input (from pin)
 			rst_pin => rst_pin,  	-- Active HIGH reset (from pin)
-			btn_pin => btn_pin,  	-- Button to swap high and low bits
 			rxd_pin => rxd_pin,  	-- RS232 RXD pin - directly from pin
-			led_pins => led_pins 	-- 8 LED outputs
+			--Inputs al cordic      					
+			x_cordic_in => x_cordic_in, --Valor de entrada al cordic
+			y_cordic_in => y_cordic_in, --Valor de entrada al cordic
+			z_cordic_in => z_cordic_in --Valor de entrada al cordic
 		);
 end;
