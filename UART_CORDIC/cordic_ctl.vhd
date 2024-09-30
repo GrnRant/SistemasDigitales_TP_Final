@@ -42,7 +42,9 @@ entity cordic_ctl is
 		--Inputs al cordic      					
 		x_cordic_in : out signed(N + 1 downto 0); --Valor de entrada al cordic
 		y_cordic_in : out signed(N + 1 downto 0); --Valor de entrada al cordic
-		z_cordic_in : out signed(N + 1 downto 0)  --Valor de entrada al cordic
+		z_cordic_in : out signed(N + 1 downto 0); --Valor de entrada al cordic
+		cordic_start : out std_logic;
+		cordic_mode : out std_logic
 	);
 end;
 
@@ -78,14 +80,20 @@ architecture cordic_ctl_arq of cordic_ctl is
 		);
 	end component;
 
+	signal x_cordic_in_aux : signed(N + 1 downto 0) := (others => '0');
+	signal y_cordic_in_aux: signed(N + 1 downto 0) := to_signed(4096, N + 2);
+	signal z_cordic_in_aux : signed(N + 1 downto 0) := (others => '0');
+
 	signal rst_clk_rx : std_logic;
 
-	-- Between uart_rx and led_ctl
+	-- Entre uart y cordic_ctl
 	signal rx_data : std_logic_vector(7 downto 0); -- Data output of uart_rx
 	signal rx_data_rdy : std_logic; -- Data ready output of uart_rx
 
+	--Señales relacionadas a comandos y estados
     signal current_state : cordic_ctl_states := S0;
 	signal cmd : cordic_ctl_cmds := CMD_NONE; 
+	signal ang_in: integer := 0;
 
 begin
 	-- Metastability harden the rst - this is an asynchronous input to the
@@ -117,93 +125,113 @@ begin
 		frm_err => open
 	);
 
-	CORDIC_CTL_PROCESS: process(rx_data_rdy)
-	begin
-	if(rising_edge(rx_data_rdy)) and cmd = CMD_NONE then
-		C_SEMF : case current_state is
-			when S0 =>
-				if rx_data = R_CHAR then
-					current_state <= S_R;
-				end if;
-				cmd <= CMD_NONE;
-			when S_R =>
-				if rx_data = O_CHAR then
-					current_state <= S_O;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_O =>
-				if rx_data = T_CHAR then
-					current_state <= S_T;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_T =>
-				if rx_data = SPC_CHAR then
-					current_state <= S_SPC;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_SPC =>
-				if rx_data = C_CHAR then
-					current_state <= S_C;
-				elsif rx_data = A_CHAR then
-					current_state <= S_C;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_C =>
-				if rx_data = SPC_CHAR then
-					current_state <= S_SPC_C;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_A =>
-				if rx_data = SPC_CHAR then
-					current_state <= S_SPC_A;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_SPC_C =>
-				if rx_data = H_CHAR then
-					current_state <= S_C_H;
-				elsif rx_data = A_CHAR then
-					current_state <= S_C_A;
-				else
-					current_state <= S0;
-				end if;
-				cmd <= CMD_NONE;
-			when S_SPC_A =>
-				if (unsigned(rx_data) >= to_unsigned(48, 7)) and (unsigned(rx_data) <= to_unsigned(48, 7)) then
-					current_state <= S_NUM1;
-				else
-					current_state <= S0;	
-				end if;
-				cmd <= CMD_NONE;
-			when S_C_H =>
-				if rx_data = NEW_LINE_CHAR then
-					cmd <= CMD_C_H;
-				else
-					cmd <= CMD_NONE;	
-				end if;
-				current_state <= S0;
-			when S_C_A =>
-				if rx_data = NEW_LINE_CHAR then
-					cmd <= CMD_C_A;
-				else
-					cmd <= CMD_NONE;	
-				end if;
-				current_state <= S0;
-			when S_NUM1 =>
-				if (unsigned(rx_data) >= to_unsigned(48, 7)) and (unsigned(rx_data) <= to_unsigned(48, 7)) then
-					current_state <= S_NUM2;
+	CORDIC_CTL_STATES_P: process(rx_data_rdy)
+		variable ang_num1 : integer :=0;
+		variable ang_num2 : integer :=0;
+		variable ang_num3 : integer :=0;	 
+		begin
+		if(rising_edge(rx_data_rdy)) and cmd = CMD_NONE then
+			C_SEMF : case current_state is
+				when S0 =>
+					ang_num1 := 0;
+					ang_num2 := 0;
+					ang_num3 := 0;
+					if rx_data = R_CHAR then
+						current_state <= S_R;
+					end if;
 					cmd <= CMD_NONE;
+				when S_R =>
+					if rx_data = O_CHAR then
+						current_state <= S_O;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_O =>
+					if rx_data = T_CHAR then
+						current_state <= S_T;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_T =>
+					if rx_data = SPC_CHAR then
+						current_state <= S_SPC;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_SPC =>
+					if rx_data = C_CHAR then
+						current_state <= S_C;
+					elsif rx_data = A_CHAR then
+						current_state <= S_C;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_C =>
+					if rx_data = SPC_CHAR then
+						current_state <= S_SPC_C;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_A =>
+					if rx_data = SPC_CHAR then
+						current_state <= S_SPC_A;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_SPC_C =>
+					if rx_data = H_CHAR then
+						current_state <= S_C_H;
+					elsif rx_data = A_CHAR then
+						current_state <= S_C_A;
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_SPC_A =>
+					if (unsigned(rx_data) >= to_unsigned(48, 8)) and (unsigned(rx_data) <= to_unsigned(48, 8)) then
+						current_state <= S_NUM1;
+						ang_num1 := to_integer(unsigned(rx_data));
+					else
+						current_state <= S0;
+					end if;
+					cmd <= CMD_NONE;
+				when S_C_H =>
+					if rx_data = NEW_LINE_CHAR then
+						cmd <= CMD_C_H;
+					else
+						cmd <= CMD_NONE;	
+					end if;
+					current_state <= S0;
+				when S_C_A =>
+					if rx_data = NEW_LINE_CHAR then
+						cmd <= CMD_C_A;
+					else
+						cmd <= CMD_NONE;	
+					end if;
+					current_state <= S0;
+				when S_NUM1 =>
+					if (unsigned(rx_data) >= to_unsigned(48, 8)) and (unsigned(rx_data) <= to_unsigned(48, 8)) then
+						current_state <= S_NUM2;
+						cmd <= CMD_NONE;
+						ang_num2 := to_integer(unsigned(rx_data));
+					elsif rx_data = NEW_LINE_CHAR then
+						current_state <= S0;
+						cmd <= CMD_A;
+					else
+						current_state <= S0;
+						cmd <= CMD_NONE;
+					end if;
+				when S_NUM2 =>
+				if (unsigned(rx_data) >= to_unsigned(48, 8)) and (unsigned(rx_data) <= to_unsigned(48, 8)) then
+					current_state <= S_NUM3;
+					cmd <= CMD_NONE;
+					ang_num3 := to_integer(unsigned(rx_data));
 				elsif rx_data = NEW_LINE_CHAR then
 					current_state <= S0;
 					cmd <= CMD_A;
@@ -211,27 +239,36 @@ begin
 					current_state <= S0;
 					cmd <= CMD_NONE;
 				end if;
-			when S_NUM2 =>
-			if (unsigned(rx_data) >= to_unsigned(48, 7)) and (unsigned(rx_data) <= to_unsigned(48, 7)) then
-				current_state <= S_NUM3;
-				cmd <= CMD_NONE;
-			elsif rx_data = NEW_LINE_CHAR then
-				current_state <= S0;
-				cmd <= CMD_A;
-			else
-				current_state <= S0;
-				cmd <= CMD_NONE;
-			end if;
-			when S_NUM3 =>
-				if rx_data = NEW_LINE_CHAR then
-					cmd <= CMD_A;
-				else
-					cmd <= CMD_NONE;
-				end if;
-				current_state <= S0;
-		end case;
-
-	end if;
+				when S_NUM3 =>
+					if rx_data = NEW_LINE_CHAR then
+						cmd <= CMD_A;
+					else
+						cmd <= CMD_NONE;
+					end if;
+					current_state <= S0;
+			end case;
+			ang_in <= 100*ang_num3 + 10*ang_num2 + ang_num1;
+		end if;
 	end process;
+	
+	CORDIC_CTL_CMDS_P: process(cmd)
+		begin
+			if cmd /= CMD_NONE then
+				if cmd = CMD_A then
+					
+				elsif cmd = CMD_C_A then
+				
+				elsif cmd = CMD_C_H then
+					
+				end if;
+			end if;
+	end process;
+
+	--Asignación pines de salida
+	--z_cordic_in <= to_signed(ang_in, N + 2);
+	x_cordic_in <= x_cordic_in_aux;
+	y_cordic_in <= y_cordic_in_aux;
+	z_cordic_in <= z_cordic_in_aux;
+	cordic_mode <= '1'; --Modo rotación siempre
 	
 end;

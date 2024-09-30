@@ -30,19 +30,17 @@ entity uart_cordic is
 		--Write side inputs
 		clk_pin: in std_logic;		-- Clock input (from pin)
 		rst_pin: in std_logic;		-- Active HIGH reset (from pin)
-		btn_pin: in std_logic;		-- Button to swap high and low bits
 		rxd_pin: in std_logic; 		-- Uart input
-		led_pins: out std_logic_vector(7 downto 0) -- 4 LED outputs
+		x_cordic_in : out signed(N + 1 downto 0); --Valor de entrada al cordic
+		y_cordic_in : out signed(N + 1 downto 0); --Valor de entrada al cordic
+		z_cordic_in : out signed(N + 1 downto 0); --Valor de entrada al cordic
+		cordic_start : out std_logic;
+		cordic_mode : out std_logic
 	);
 end;
 	
 
 architecture uart_cordic_arq of uart_cordic is
-
-	--Inputs al cordic      					
-	signal x_cordic_in: signed(N + 1 downto 0); --Valor de entrada al cordic
-	signal y_cordic_in: signed(N + 1 downto 0); --Valor de entrada al cordic
-	signal z_cordic_in: signed(N + 1 downto 0);  --Valor de entrada al cordic
 
 	component cordic_ctl is
 		generic(
@@ -57,7 +55,9 @@ architecture uart_cordic_arq of uart_cordic is
 			--Inputs al cordic      					
 			x_cordic_in: out signed(N + 1 downto 0); --Valor de entrada al cordic
 			y_cordic_in: out signed(N + 1 downto 0); --Valor de entrada al cordic
-			z_cordic_in: out signed(N + 1 downto 0)  --Valor de entrada al cordic
+			z_cordic_in: out signed(N + 1 downto 0);  --Valor de entrada al cordic
+			cordic_start: out std_logic;
+			cordic_mode: out std_logic
 		);
 	end component;
 
@@ -75,6 +75,8 @@ begin
 			--Inputs al cordic      					
 			x_cordic_in => x_cordic_in, --Valor de entrada al cordic
 			y_cordic_in => y_cordic_in, --Valor de entrada al cordic
-			z_cordic_in => z_cordic_in --Valor de entrada al cordic
+			z_cordic_in => z_cordic_in, --Valor de entrada al cordic
+			cordic_start => cordic_start, --Para indicar comienzo de cálculos
+			cordic_mode => cordic_mode --Para indicar modo rotación o vector
 		);
 end;
