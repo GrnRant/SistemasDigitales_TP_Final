@@ -10,7 +10,7 @@ use work.utils.all;
 
 entity cordic is
     --N cantidad de bits para cuentas, ITERATIONS cantidad de iteraciones, N_CONT bits del contador elegido 
-    --en función de la cantidad de ITERATIONS (no debe superarse) y FRAC cantidad de decimales en cuentas
+    --en función de la cantidad de ITERATIONS (no debe superares) y FRAC cantidad de decimales en cuentas
     --(es decir cantidad de bits de la parte fraccionaria de los números en binario)  
     generic(N: natural := 16; N_CONT : natural := 4; ITERATIONS: natural := 15; FRAC: natural := 2);
     port(x0 : in signed(N+1 downto 0);  --Valor de entrada al cordic
@@ -106,11 +106,15 @@ begin
 beta <= to_signed(betas(i), N+2) when count_en = '1' else (others => '0');
 
 --PROCESO PRINCIPAL DE INICIO Y TERMINADO
-P_MAIN: process(clk, start, i)
+P_MAIN: process(clk, i)
+variable pre_start: std_logic := '1';
 begin
-    --Detección de inicio
-    if falling_edge(start) then
-        count_en <= '1';
+    if rising_edge(clk) then
+        --Detección de inicio
+        if pre_start = '1' and start = '0' then
+            count_en <= '1';
+        end if;
+        pre_start := start;
     end if;
     if i = 0 then
         x_in <= x_pre;
@@ -243,13 +247,14 @@ begin
 
     --Proceso que va despalazando el modo a través de las estapas
     --(serían los registros de desplazamiento del pin del modo)
-    P_MODE_REG: process(start, clk)
+    P_MODE_REG: process(clk)
         begin
-        if start = '1' then
-            mode_vec(ITERATIONS downto 1) <= (others => '0');
-        end if;
         if rising_edge(clk) then
-               mode_vec(ITERATIONS downto 1) <= mode_vec(ITERATIONS-1 downto 0);
+            if start = '1' then
+                mode_vec(ITERATIONS downto 1) <= (others => '0');
+            else
+                mode_vec(ITERATIONS downto 1) <= mode_vec(ITERATIONS-1 downto 0);
+            end if;
         end if;
     end process;
     

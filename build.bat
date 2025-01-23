@@ -5,16 +5,17 @@ if exist build\ (
 ) 
 mkdir build
 
-@REM UART_CORDIC
-ghdl -a --workdir=build UART_CORDIC/meta_harden.vhd
-ghdl -a --workdir=build UART_CORDIC/uart_baud_gen.vhd
-ghdl -a --workdir=build UART_CORDIC/uart_rx_ctl.vhd
-ghdl -a --workdir=build UART_CORDIC/uart_rx.vhd
-ghdl -a --workdir=build UART_CORDIC/cordic_ctl_utils.vhd
-ghdl -a --workdir=build UART_CORDIC/cordic_ctl.vhd
+@REM uart_cmd
+ghdl -a --workdir=build uart_cmd/meta_harden.vhd
+ghdl -a --workdir=build uart_cmd/uart_baud_gen.vhd
+ghdl -a --workdir=build uart_cmd/uart_rx_ctl.vhd
+ghdl -a --workdir=build uart_cmd/uart_rx.vhd
+ghdl -a --workdir=build utilities/utilities.vhd
+ghdl -a --workdir=build uart_cmd/cmd_ctl.vhd
+ghdl -a --workdir=build cordic/cordic_ctl.vhd
 
 @REM GENERAL
-ghdl -a --workdir=build uart_cordic.vhd
+ghdl -a --workdir=build vector_rotator.vhd
 
 @REM Run
-ghdl -r --workdir=build uart_cordic --vcd=build/uart_cordic.vcd
+ghdl -r --workdir=build vector_rotator --vcd=build/vector_rotator.vcd
