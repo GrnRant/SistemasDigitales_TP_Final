@@ -12,13 +12,13 @@ entity cordic is
     --N cantidad de bits para cuentas, ITERATIONS cantidad de iteraciones, N_CONT bits del contador elegido 
     --en función de la cantidad de ITERATIONS (no debe superares) y FRAC cantidad de decimales en cuentas
     --(es decir cantidad de bits de la parte fraccionaria de los números en binario)  
-    generic(N: natural := 16; N_CONT : natural := 4; ITERATIONS: natural := 15; FRAC: natural := 2);
-    port(x0 : in signed(N+1 downto 0);  --Valor de entrada al cordic
-        y0 : in signed(N+1 downto 0);   --Valor de entrada al cordic
-        z0 : in signed(N+1 downto 0);   --Valor de entrada al cordic
-        xr : out signed(N+1 downto 0);  --Valor de salida del cordic
-        yr : out signed(N+1 downto 0);  --Valor de salida del cordic
-        zr : out signed(N+1 downto 0);  --Valor de salida del cordic
+    generic(N: natural := 16; N_CONT : natural := 4; ITERATIONS: natural := 15);
+    port(x0 : in signed(N-1 downto 0);  --Valor de entrada al cordic
+        y0 : in signed(N-1 downto 0);   --Valor de entrada al cordic
+        z0 : in signed(N-1 downto 0);   --Valor de entrada al cordic
+        xr : out signed(N-1 downto 0);  --Valor de salida del cordic
+        yr : out signed(N-1 downto 0);  --Valor de salida del cordic
+        zr : out signed(N-1 downto 0);  --Valor de salida del cordic
         start : in std_logic;           --Indica el inicio para el cordic rolled y reset para el unrolled 
         clk : in std_logic;             --Clock del cordic
         mode : in std_logic             --Modo de operacion (rotación => '1', vector => '0')
@@ -27,27 +27,27 @@ end cordic;
 
 architecture cordic_rolled_arch of cordic is
     signal i : natural;
-    signal x_pre : signed(N+1 downto 0);  --Salida del precordic
-    signal y_pre : signed(N+1 downto 0);  --Salida del precordic
-    signal z_pre : signed(N+1 downto 0);  --Salida del precordic
-    signal x_in : signed(N+1 downto 0);   --Entrada a etapa cordic
-    signal y_in : signed(N+1 downto 0);   --Entrada a etapa cordic
-    signal z_in : signed(N+1 downto 0);   --Entrada a etapa cordic
-    signal x_act : signed(N+1 downto 0);  --Salida del registro de salida
-    signal y_act : signed(N+1 downto 0);  --Salida del registro de salida
-    signal z_act : signed(N+1 downto 0);  --Salida del registro de salida
-    signal x_next : signed(N+1 downto 0); --Salida del cordic
-    signal y_next : signed(N+1 downto 0); --Salida del cordic
-    signal z_next : signed(N+1 downto 0); --Salida del cordic
-    constant betas: int_array(ITERATIONS-1 downto 0) := gen_atan_table(N+2, ITERATIONS); --LUT con betas por iteración
-    signal beta : signed(N+1 downto 0); --Variable auxiliar
+    signal x_pre : signed(N-1 downto 0);  --Salida del precordic
+    signal y_pre : signed(N-1 downto 0);  --Salida del precordic
+    signal z_pre : signed(N-1 downto 0);  --Salida del precordic
+    signal x_in : signed(N-1 downto 0);   --Entrada a etapa cordic
+    signal y_in : signed(N-1 downto 0);   --Entrada a etapa cordic
+    signal z_in : signed(N-1 downto 0);   --Entrada a etapa cordic
+    signal x_act : signed(N-1 downto 0);  --Salida del registro de salida
+    signal y_act : signed(N-1 downto 0);  --Salida del registro de salida
+    signal z_act : signed(N-1 downto 0);  --Salida del registro de salida
+    signal x_next : signed(N-1 downto 0); --Salida del cordic
+    signal y_next : signed(N-1 downto 0); --Salida del cordic
+    signal z_next : signed(N-1 downto 0); --Salida del cordic
+    constant betas: int_array(ITERATIONS-1 downto 0) := gen_atan_table(N, ITERATIONS); --LUT con betas por iteración
+    signal beta : signed(N-1 downto 0); --Variable auxiliar
     signal count_en : std_logic; --Variable auxiliar para habilitación del contador
     signal gain : integer; --Ganancia de CORDIC
     
 begin
     --PRECORDIC
     PRECORDIC: entity work.precordic
-    generic map(NP => N+2)
+    generic map(NP => N)
     port map(x_in => x0,
          y_in => y0,
          z_in => z0,
@@ -68,7 +68,7 @@ begin
      );
      --ETAPA CORDIC
      CORDIC_STAGE: entity work.cordic_stage
-     generic map(NC => N+2)
+     generic map(NC => N)
     port map(x_in => x_in,
              y_in => y_in,
              z_in => z_in,
@@ -81,21 +81,21 @@ begin
     );
     --REGISTROS A LA SALIDA
     REG_X: entity work.ffd
-    generic map(NR => N+2)
+    generic map(NR => N)
     port map(rst => start,
              clk => clk,
              di => x_next,
              qo => x_act
     );
     REG_Y: entity work.ffd
-    generic map(NR => N+2)
+    generic map(NR => N)
     port map(rst => start,
              clk => clk,
              di => y_next,
              qo => y_act
     );
     REG_Z: entity work.ffd
-    generic map(NR => N+2)
+    generic map(NR => N)
     port map(rst => start,
              clk => clk,
              di => z_next,
@@ -103,7 +103,7 @@ begin
     );
 
 --Asignación de valor de beta
-beta <= to_signed(betas(i), N+2) when count_en = '1' else (others => '0');
+beta <= to_signed(betas(i), N) when count_en = '1' else (others => '0');
 
 --PROCESO PRINCIPAL DE INICIO Y TERMINADO
 P_MAIN: process(clk, i)
@@ -138,11 +138,11 @@ zr <= z_act;
 end cordic_rolled_arch;
 
 architecture cordic_unrolled_arch of cordic is
-    type array_of_signed is array(natural range <>) of signed(N+1 downto 0);
+    type array_of_signed is array(natural range <>) of signed(N-1 downto 0);
 
-    signal x_pre : signed(N+1 downto 0);                --Salida del precordic
-    signal y_pre : signed(N+1 downto 0);                --Salida del precordic
-    signal z_pre : signed(N+1 downto 0);                --Salida del precordic
+    signal x_pre : signed(N-1 downto 0);                --Salida del precordic
+    signal y_pre : signed(N-1 downto 0);                --Salida del precordic
+    signal z_pre : signed(N-1 downto 0);                --Salida del precordic
     signal x_i: array_of_signed(ITERATIONS downto 0);   --Entradas de etapas cordic
     signal y_i: array_of_signed(ITERATIONS downto 0);   --Entradas de etapas cordic
     signal z_i: array_of_signed(ITERATIONS downto 0);   --Entradas de etapas cordic
@@ -150,7 +150,7 @@ architecture cordic_unrolled_arch of cordic is
     signal y_o: array_of_signed(ITERATIONS downto 0);   --Salidas de etapas cordic
     signal z_o: array_of_signed(ITERATIONS downto 0);   --Salidas de etapas cordic
 
-    constant betas: int_array(ITERATIONS-1 downto 0) := gen_atan_table(N+2, ITERATIONS); --LUT con betas por iteración
+    constant betas: int_array(ITERATIONS-1 downto 0) := gen_atan_table(N, ITERATIONS); --LUT con betas por iteración
 
     signal mode_vec : std_logic_vector(ITERATIONS downto 0); --Usado para el pasaje del modo por las distintas etapas
 
@@ -195,7 +195,7 @@ begin
 
     --PRECORDIC
     PRECORDIC: entity work.precordic
-    generic map(NP => N+2)
+    generic map(NP => N)
     port map(x_in => x0,
          y_in => y0,
          z_in => z0,
@@ -207,20 +207,20 @@ begin
 
     COMPONENTS: for i in 0 to ITERATIONS-1 generate
         CORDIC_STAGE_INST: cordic_stage
-        generic map(NC => N+2)
+        generic map(NC => N)
         port map(x_in => x_i(i),
                  y_in => y_i(i),
                  z_in => z_i(i),
                  x_out => x_o(i),
                  y_out => y_o(i),
                  z_out => z_o(i),
-                 beta => to_signed(betas(i), N+2),
+                 beta => to_signed(betas(i), N),
                  shift => i,
                  mode => mode_vec(i)
         );
 
         REG_X_INST: ffd
-        generic map(NR => N+2)
+        generic map(NR => N)
         port map(rst => start,
                  clk => clk,
                  di => x_o(i),
@@ -228,7 +228,7 @@ begin
         );
 
         REG_Y_INST: ffd
-        generic map(NR => N+2)
+        generic map(NR => N)
         port map(rst => start,
                  clk => clk,
                  di => y_o(i),
@@ -236,7 +236,7 @@ begin
         );
 
         REG_Z_INST: ffd
-        generic map(NR => N+2)
+        generic map(NR => N)
         port map(rst => start,
                  clk => clk,
                  di => z_o(i),

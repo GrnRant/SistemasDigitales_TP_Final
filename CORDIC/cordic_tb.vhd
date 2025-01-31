@@ -16,8 +16,8 @@ architecture cordic_tb_arq of cordic_tb is
     signal rst : std_logic := '0';
     signal req : std_logic := '0';
     signal rot0_vec1 : std_logic := '0';
-    signal x_in,y_in,z_in : signed(N+1 downto 0);
-    signal x_out,y_out,z_out : signed(N+1 downto 0);
+    signal x_in,y_in,z_in : signed(N-1 downto 0);
+    signal x_out,y_out,z_out : signed(N-1 downto 0);
 
     signal count : integer := 0;
 
@@ -46,13 +46,13 @@ begin
             -- Se extrae un entero de la linea
             read(l, aux);
             -- Se carga el valor de la coordenada X (en fondo de escala)
-            x_in <= to_signed(aux, N+2);
+            x_in <= to_signed(aux, N);
             -- Se lee un caracter (el espacio)
             read(l, ch);
             -- Se lee otro entero de la linea
             read(l, aux);
             -- Se carga el valor de la coordenada Y (en fondo de escala)
-            y_in <= to_signed(aux, N+2);
+            y_in <= to_signed(aux, N);
             -- Se lee otro caracter (el espacio)
             read(l, ch);
             -- Se lee otro entero
@@ -61,16 +61,15 @@ begin
             z_file := aux;
             
             -- Opero con el angulo a rotar.
-            ANG_RAD := (real(z_file)*MATH_PI)/real(180); -- Lo paso a radianes
-            ANG_Z := integer( round( (ANG_RAD/arctan(real(1))) * real(2**(N-1)) ) ); -- Lo escalo
+            ANG_Z := integer( round( (real(z_file)*(2.0**(N-1)-1.0) / 180.0) ) ); -- Lo escalo 
             
             -- Se carga el valor correspondiente del angulo a rotar
-            z_in <= to_signed(ANG_Z,N+2);
+            z_in <= to_signed(ANG_Z, N);
             
             rst <= '1';
             wait until rising_edge(clk);
             rst <= '0';
-            wait until count = N+2;
+            wait until count = N;
             wait until rising_edge(clk);
         end loop;
     
@@ -85,7 +84,7 @@ begin
     P_STAGES_COUNT: process(clk)
     begin
         if rising_edge(clk) then
-            if count >= N+2 then
+            if count >= N then
                 count <= 0;
             else
                 count <= count + 1;

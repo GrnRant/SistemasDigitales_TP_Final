@@ -18,7 +18,7 @@ entity cmd_ctl is
 		rxd_pin : in std_logic; -- RS232 RXD pin - directly from pin
 		-- Salidas
 		cmd_out : out cordic_ctl_cmds;
-		ang_out : out signed(N + 1 downto 0)
+		ang_out : out signed(N - 1 downto 0)
 	);
 end;
 
@@ -170,7 +170,7 @@ begin
 						current_state <= S0;
 				end case;
 			end if;
-			ang_out <= to_signed(100*ang_num3 + 10*ang_num2 + ang_num1, N + 2);
+			ang_out <= to_signed(100*ang_num3 + 10*ang_num2 + ang_num1, N);
 		end if;
 	end process;
 end;

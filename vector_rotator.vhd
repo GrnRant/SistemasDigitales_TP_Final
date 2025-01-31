@@ -1,23 +1,3 @@
--------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date: 10/19/2015 10:24:29 AM
--- Design Name: 
--- Module Name: vector_rotator
--- Project Name: 
--- Target Devices: 
--- Tool Versions: 
--- Description: 
--- 
--- Dependencies: 
--- 
--- Revision:
--- Revision 0.01 - File Created
--- Additional Comments:
--- 
---////////////////////////////////////////////////////////////////////////////////
-
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
@@ -40,13 +20,13 @@ end;
 
 architecture vector_rotator_arq of vector_rotator is
 	signal cmd : cordic_ctl_cmds;
-	signal ang_a : signed(N + 1 downto 0);
-	signal x_i : signed(N + 1 downto 0);
-	signal y_i : signed(N + 1 downto 0);
-	signal z_i : signed(N + 1 downto 0);
-	signal x_o : signed(N + 1 downto 0);
-	signal y_o : signed(N + 1 downto 0);
-	signal z_o : signed(N + 1 downto 0);
+	signal ang_a : signed(N - 1 downto 0);
+	signal x_i : signed(N - 1 downto 0);
+	signal y_i : signed(N - 1 downto 0);
+	signal z_i : signed(N - 1 downto 0);
+	signal x_o : signed(N - 1 downto 0);
+	signal y_o : signed(N - 1 downto 0);
+	signal z_o : signed(N - 1 downto 0);
 	signal start : std_logic;
 begin
 
