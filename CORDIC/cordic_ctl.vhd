@@ -36,10 +36,12 @@ architecture cordic_ctl_arq of cordic_ctl is
 	signal z_cordic_in_aux : signed(N - 1 downto 0) := (others => '0');
 	signal cmd_cycles_count : natural := 0;
 	signal ang_in_pre : signed(N - 1 downto 0);
+	signal actual_ang : signed(N - 1 downto 0) := (others => '0');
 	constant X_INIT : signed(N - 1 downto 0) := to_signed(0, N); --Posición inicial en Y es 0.75 del máximo valor positivo que puede tener
 	constant Y_INIT : signed(N - 1 downto 0) := to_signed(integer((2**(N-1) - 1) * 3 / 4), N); --Posición inicial en Y es 0.75 del máximo valor positivo que puede tener
 	constant ANG_ZERO : signed(N - 1 downto 0) := to_signed(0, N); --Ángulo igual a cero
 	constant ANG_STEP : signed(N - 1 downto 0) := to_signed(integer((2.0**(N-1)-1.0) / 256.0), N); --Pasos de 0.703125 (escalados)
+	constant ERROR : signed(N - 1 downto 0) := to_signed(1, N); --Error
 
 begin
 	CORDIC_CTL_CMD_EXE: process(clk)
@@ -53,6 +55,7 @@ begin
 				cordic_start <= '1'; -- Flanco descendente para arrancar cordic
 				cmd_cycles_count <= 0;
 			end if;
+			
 			--Si no se llegó a CORDIC_CYCLES seguir esperando
 			if cmd_cycles_count < CORDIC_CYCLES then
 				cordic_start <= '0'; --Arranca el cordic si no lo estaba (por flanco descendente)
@@ -67,11 +70,13 @@ begin
 						--Si cambió ang_in con respecto a ciclo anterior hay nuevo ángulo
 						if ang_in_pre /= ang_in then
 							z_cordic_in <= ANG_STEP;
+							actual_ang <= ang_in;
 						--Si todavía no se llegó a posición avanzar un paso más (cuidado con margen de error de z_cordic_out)
-						elsif z_cordic_out <= ANG_ZERO then
+						elsif actual_ang > ANG_ZERO then
 							x_cordic_in <= x_cordic_out;
 							y_cordic_in <= y_cordic_out;
 							z_cordic_in <= ANG_STEP;
+							actual_ang <= ang_in - ANG_STEP;
 						--Si ya se llegó a posición no hacer nada
 						else
 							x_cordic_in <= x_cordic_out;
