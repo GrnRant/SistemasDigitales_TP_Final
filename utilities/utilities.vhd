@@ -34,7 +34,7 @@ package body utils is
         variable table : int_array(iterations-1 downto 0);
       begin
         for i in table'range loop
-          --Escalado: (2.0**(size-1)-1.0)/180.0 ; arctan devuelve en radianes entonces se cancle 180°
+          --Escalado: (2.0**(size-1)-1.0)/180.0 ; arctan devuelve en radianes entonces se cancela 180°
           table(i) := integer((arctan(2.0 ** (-i)) / MATH_PI) * (2.0**(size-1)-1.0));
         end loop;
         return table;

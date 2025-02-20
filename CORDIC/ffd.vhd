@@ -8,7 +8,8 @@ entity ffd is
         di : in signed(NR - 1 downto 0); --Entrada del flip-flop D
         qo : out signed(NR - 1 downto 0); --Salida
         clk : in std_logic; --Clock
-        rst : in std_logic --Reset
+        rst : in std_logic; --Reset
+        ena : in std_logic --Enable
     );
 end ffd;
 
@@ -21,7 +22,7 @@ begin
             --Reset
             if rst = '1' then
                 qo <= (others => '0');
-            else
+            elsif ena = '1' then
                 qo <= di;
             end if;
         end if;
