@@ -15,7 +15,8 @@ entity cmd_ctl is
 		-- Entradas
 		clk_pin : in std_logic; -- Clock input (from pin)
 		rst_pin : in std_logic; -- Active HIGH reset (from pin)
-		rxd_pin : in std_logic; -- RS232 RXD pin - directly from pin
+		rx_data : in std_logic_vector(7 downto 0); -- Data output of uart_rx
+		rx_data_rdy : in std_logic; -- Data ready output of uart_rx
 		-- Salidas
 		cmd_out : out cordic_ctl_cmds;
 		ang_out : out signed(N - 1 downto 0)
@@ -23,44 +24,10 @@ entity cmd_ctl is
 end;
 
 architecture cmd_ctl_arq of cmd_ctl is
-	signal rst_clk_rx : std_logic;
-
-	-- Entre uart y cordic_ctl
-	signal rx_data : std_logic_vector(7 downto 0); -- Data output of uart_rx
-	signal rx_data_rdy : std_logic; -- Data ready output of uart_rx
-
 	--Señales relacionadas a comandos y estados
     signal current_state : cordic_ctl_states := S0;
 
 begin
-	-- Metastability harden the rst - this is an asynchronous input to the
-	-- system (from a pushbutton), and is used in synchronous logic. Therefore
-	-- it must first be synchronized to the clock domain (clk_pin in this case)
-	-- prior to being used. A simple metastability hardener is appropriate here.
-	META_HARDEN_RST: entity work.meta_harden
-	port map(
-		clk_dst => clk_pin,
-		rst_dst => '0', -- No reset on the hardener for reset!
-		signal_src => rst_pin,
-		signal_dst => rst_clk_rx
-	);
-
-	UART_RX_INSTANCE : entity work.uart_rx
-	generic map(
-		CLOCK_RATE => CLOCK_RATE,
-		BAUD_RATE => BAUD_RATE
-	)
-	port map(
-		clk_rx => clk_pin,
-		rst_clk_rx => rst_clk_rx,
-
-		rxd_i => rxd_pin,
-		rxd_clk_rx => open,
-
-		rx_data_rdy => rx_data_rdy,
-		rx_data => rx_data,
-		frm_err => open
-	);
 	--FSM de cordic_ctl
 	CORDIC_CTL_FSM: process(clk_pin)
 		variable ang_num1 : integer :=0;

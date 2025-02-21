@@ -24,7 +24,7 @@ entity cordic_ctl is
 		--Inputs al cordic (outputs de cordic_ctl)				
 		x_cordic_in : out signed(N - 1 downto 0); --Valor de entrada al cordic
 		y_cordic_in : out signed(N - 1 downto 0); --Valor de entrada al cordic
-		z_cordic_in : out signed(N - 1 downto 0); --Valor de entrada al cordic
+		z_cordic_in : out signed(N - 1 downto 0); --Valor de entrada al cordic 
 		cordic_start : out std_logic
 	);
 end;

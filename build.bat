@@ -13,6 +13,11 @@ ghdl -a --workdir=build uart_cmd/uart_rx.vhd
 ghdl -a --workdir=build utilities/utilities.vhd
 ghdl -a --workdir=build uart_cmd/cmd_ctl.vhd
 ghdl -a --workdir=build cordic/cordic_ctl.vhd
+ghdl -a --workdir=build utilities/ffd.vhd
+ghdl -a --workdir=build utilities/counter.vhd
+ghdl -a --workdir=build cordic/cordic_stage.vhd
+ghdl -a --workdir=build cordic/precordic.vhd
+ghdl -a --workdir=build cordic/cordic.vhd
 
 @REM GENERAL
 ghdl -a --workdir=build vector_rotator.vhd
