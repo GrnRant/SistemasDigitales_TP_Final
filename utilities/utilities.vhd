@@ -5,7 +5,21 @@ use IEEE.numeric_std.all;
 use ieee.math_real.all;
 
 package utils is
-    type cordic_ctl_states is (S0, S_R, S_O, S_T, S_SPC, S_A, S_SPC_A, S_NUM1, S_NUM2, S_NUM3, S_C, S_SPC_C, S_C_H, S_C_A);
+    subtype cmd_ctl_states is std_logic_vector(3 downto 0);
+    constant S0: cmd_ctl_states := "0000";
+    constant S_R: cmd_ctl_states := "0001"; 
+    constant S_O: cmd_ctl_states := "0010";
+    constant S_T: cmd_ctl_states := "0011";
+    constant S_SPC: cmd_ctl_states := "0100";
+    constant S_A: cmd_ctl_states := "0101";
+    constant S_SPC_A: cmd_ctl_states := "0110";
+    constant S_NUM1: cmd_ctl_states := "0111";
+    constant S_NUM2: cmd_ctl_states := "1000";
+    constant S_NUM3: cmd_ctl_states := "1001";
+    constant S_C: cmd_ctl_states := "1010";
+    constant S_SPC_C: cmd_ctl_states := "1011";
+    constant S_C_H: cmd_ctl_states := "1100";
+    constant S_C_A: cmd_ctl_states := "1101";
 
     constant R_CHAR: std_logic_vector(7 downto 0) := x"52";
     constant O_CHAR: std_logic_vector(7 downto 0) := x"4F";
@@ -14,9 +28,13 @@ package utils is
     constant C_CHAR: std_logic_vector(7 downto 0) := x"43";
     constant A_CHAR: std_logic_vector(7 downto 0) := x"41";
     constant H_CHAR: std_logic_vector(7 downto 0) := x"48";
-    constant NEW_LINE_CHAR: std_logic_vector(7 downto 0) := x"09";
+    constant NEW_LINE_CHAR: std_logic_vector(7 downto 0) := x"0A";
 
-    type cordic_ctl_cmds is (CMD_NONE, CMD_C_H, CMD_C_A, CMD_A);
+    subtype cordic_ctl_cmds is std_logic_vector(1 downto 0);
+    constant CMD_NONE: cordic_ctl_cmds := "00";
+    constant CMD_C_H: cordic_ctl_cmds := "01";
+    constant CMD_C_A: cordic_ctl_cmds := "10";
+    constant CMD_A: cordic_ctl_cmds := "11";
 
     type int_array is array (natural range <>) of integer;
     --Genera la tabla con los betas para cada iteración (sería la LUT)

@@ -5,24 +5,24 @@ use ieee.numeric_std.all;
 entity gen_tiles is
     generic(
             N_CORDIC: natural := 16;
-            N_ADDRESS: natural := 15; --Memoria de 32kx1bit -> address máximo es 32000
-            N_DATA: natural := 16; --Memoria de 32kx1bit -> "words" son de 1bit
+            N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
+            N_DATA: natural := 16; --Memoria de 32kx16bit -> "words" son de 1bit
             MAX_VAL : natural := 50 --Se calculó en base a BRAM y resolución de 480x640
     );
     port(
         rst : in std_logic;
         clk : in std_logic;
-        x_in : in signed(N_CORDIC-1 downto 0);
-        y_in : in signed(N_CORDIC-1 downto 0);
+        x_in : in signed(N_CORDIC - 1 downto 0);
+        y_in : in signed(N_CORDIC - 1 downto 0);
         cordic_busy : in std_logic;
         wr : out std_logic;
-        addr : out unsigned(N_ADDRESS-1 downto 0);
-        wr_data : out unsigned(N_DATA-1 downto 0)
+        addr : out unsigned(N_ADDRESS - 1 downto 0);
+        wr_data : out unsigned(N_DATA - 1 downto 0)
     );
 end gen_tiles;
 
 architecture gen_tiles_arch of gen_tiles is
-    constant cordic_scale: integer := 2**(N_CORDIC-1)/MAX_VAL;
+    constant cordic_scale: integer := 2**(N_CORDIC - 2)/MAX_VAL;
     signal x_coord: integer := 0;
     signal y_coord: integer := 0;
     signal bit_index: integer := 0;
@@ -51,7 +51,7 @@ begin
     x_coord <= to_integer(x_in)/cordic_scale;
     y_coord <= to_integer(y_in)/cordic_scale;
     bit_index <= x_coord - 160*y_coord + 9680;
-    addr <= to_unsigned(bit_index/N_DATA, N_DATA);
+    addr <= to_unsigned(bit_index/N_DATA, N_ADDRESS);
     wr_data <= to_unsigned(bit_index mod N_DATA, N_DATA);
 
 end architecture gen_tiles_arch;

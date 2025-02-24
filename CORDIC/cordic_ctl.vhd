@@ -38,7 +38,7 @@ architecture cordic_ctl_arq of cordic_ctl is
 	signal ang_in_pre : signed(N - 1 downto 0);
 	signal actual_ang : signed(N - 1 downto 0) := (others => '0');
 	constant X_INIT : signed(N - 1 downto 0) := to_signed(0, N); --Posición inicial en Y es 0.75 del máximo valor positivo que puede tener
-	constant Y_INIT : signed(N - 1 downto 0) := to_signed(integer((2**(N-1) - 1) * 3 / 4), N); --Posición inicial en Y es 0.75 del máximo valor positivo que puede tener
+	constant Y_INIT : signed(N - 1 downto 0) := to_signed(integer(2**(N-2)) , N); --Posición inicial el máximo valor positivo que puede tener (se toma en cuenta que hay que realizar cuentas también)
 	constant ANG_ZERO : signed(N - 1 downto 0) := to_signed(0, N); --Ángulo igual a cero
 	constant ANG_STEP : signed(N - 1 downto 0) := to_signed(integer((2.0**(N-1)-1.0) / 256.0), N); --Pasos de 0.703125 (escalados)
 	constant ERROR : signed(N - 1 downto 0) := to_signed(1, N); --Error
@@ -92,12 +92,14 @@ begin
 					when CMD_C_H =>
 						x_cordic_in <= x_cordic_out;
 						y_cordic_in <= y_cordic_out;
-						z_cordic_in <= ANG_STEP;
+						z_cordic_in <= -ANG_STEP;
 					--Si no hay ningún comando
 					when CMD_NONE =>
 						x_cordic_in <= x_cordic_out;
 						y_cordic_in <= y_cordic_out;	
 						z_cordic_in <= ANG_ZERO;
+					when others =>
+					
 					end case;			
 			end if;
 			ang_in_pre <= ang_in;
