@@ -17,7 +17,7 @@ architecture rot_a_ang_tb_arq of rot_a_ang_tb is
     constant N_CORDIC: natural := 16;
     constant N_ADDRESS: natural := 15;
     constant N_DATA: natural := 16;
-    constant CORDIC_ITERATIONS: natural := 15;
+    constant CORDIC_ITERATIONS: natural := 16;
     constant CORDIC_CTL_CYCLES: natural := 500;
     constant COORDS_MAX_TILE_VALUE: natural := 50;
 

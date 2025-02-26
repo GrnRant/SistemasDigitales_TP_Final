@@ -14,7 +14,7 @@ entity cordic is
     --(es decir cantidad de bits de la parte fraccionaria de los números en binario)  
     generic(N: natural := 16; 
             N_CONT : natural := 4; 
-            ITERATIONS: natural := 15; 
+            ITERATIONS: natural := 16; 
             GAIN_DECIMALS: natural := 3);
     port(x0 : in signed(N-1 downto 0);  --Valor de entrada al cordic
         y0 : in signed(N-1 downto 0);   --Valor de entrada al cordic

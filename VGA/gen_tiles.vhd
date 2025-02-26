@@ -8,7 +8,9 @@ entity gen_tiles is
             N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
             N_DATA: natural := 16; --Memoria de 32kx16bit -> "words" son de 1bit
             MAX_CORDIC_COMP_VALUE: natural := 8192; --Valor máximo con el que puede venir una componente del cordic
-            MAX_VAL : natural := 50 --Se calculó en base a BRAM y resolución de 480x640
+            MAX_TILE_VAL: natural := 50; --Se calculó en base a BRAM y resolución de 480x640
+            L_T: natural := 120;
+            P_T: natural := 160
     );
     port(
         rst : in std_logic;
@@ -23,36 +25,84 @@ entity gen_tiles is
 end gen_tiles;
 
 architecture gen_tiles_arch of gen_tiles is
-    constant cordic_scale: integer := MAX_CORDIC_COMP_VALUE/MAX_VAL;
-    signal x_coord: integer := 0;
-    signal y_coord: integer := 0;
-    signal bit_index: integer := 0;
+    constant CORDIC_SCALE: integer := MAX_CORDIC_COMP_VALUE/MAX_TILE_VAL;
+    signal x_comp: integer := 0;
+    signal y_comp: integer := 0;
+    signal x_pos: integer := 0;
+    signal y_pos: integer := 0;
+    signal p_tile: integer := 0; --Píxel actual
+    signal l_tile: integer := 0; --Línea actual
+    signal bit_index: integer := 0; --Número de píxel, ubicado en (p_tile, l_tile)
+    signal bit_value: std_logic := '0'; --Valor de píxel actual
     signal busy_pre_state: std_logic := '0';
+    signal wr_aux: std_logic := '0';
 begin
     P_GEN_TILES_MAIN: process(clk)
+    variable n: natural := 1;
+
     begin
         if rising_edge(clk) then
             --Reset
             if rst = '1' then
-                wr <= '0';
+                p_tile <= 0;
+                l_tile <= 0;
+                bit_value <= '0';
+                wr_aux <= '0';
                 addr <= (others => '0');
                 wr_data <= (others => '0');
             end if;
-            --Si se detectó que bajó la línea de busy, habilitar escritura
+
+            --Si se detectó que bajó la línea de busy hay datos nuevos (habilitar escritura y resetar posiciones)
             if (busy_pre_state = '1' and cordic_busy = '0') then
-                wr <= '1';
-            else
-                wr <= '0';
+                p_tile <= 0;
+                l_tile <= 0;
+                bit_value <= '0';
+                wr_aux <= '1';
             end if;
+
+            --Si está habilitada la escritura, setear siguiente tile
+            if wr_aux = '1' then
+                --Ejes
+                if p_tile = P_T/2 or l_tile = L_T/2 then
+                    bit_value <= '1';
+                --Vector
+                elsif p_tile = ((P_T/2 + x_comp)/n) and l_tile = ((L_T/2 + y_comp)/n) then
+                    bit_value <= '1';
+                    n := n + 1;
+                --Cualquier otro tile
+                else
+                    bit_value <= '0';
+                end if;
+
+                --Número de tile a pintar
+                bit_index <= p_tile + P_T*l_tile;
+                --Address de word que contiene el tile
+                addr <= to_unsigned(bit_index/N_DATA, N_ADDRESS);
+                --Bit del word que representa al tile
+                wr_data(bit_index mod N_DATA) <= bit_value;
+
+                --Actualizar valores de p_tile y l_tile
+                if p_tile < (P_T - 1) then
+                    p_tile <= p_tile + 1;
+                --Si se llegó a final de línea saltar a la siguiente
+                elsif l_tile < (L_T - 1) then
+                    p_tile <= 0;
+                    l_tile <= l_tile + 1;
+                --Si se llega a final deshabilitar escritura
+                else
+                    wr_aux <= '0';
+                end if;
+
+            end if;
+
+            --Para detección de flanco descendente de busy
             busy_pre_state <= cordic_busy;
         end if;
     end process;
 
-    --Esto solo escribe un punto, necesito que haga dibujo entero
-    x_coord <= to_integer(x_in)/cordic_scale;
-    y_coord <= to_integer(y_in)/cordic_scale;
-    bit_index <= x_coord - 160*y_coord + 9680;
-    addr <= to_unsigned(bit_index/N_DATA, N_ADDRESS);
-    wr_data <= to_unsigned(bit_index mod N_DATA, N_DATA);
+    wr <= wr_aux;
+    --Valores de las componentes (se escalan al tile)
+    x_comp <= to_integer(x_in)/CORDIC_SCALE;
+    y_comp <= to_integer(y_in)/CORDIC_SCALE;
 
 end architecture gen_tiles_arch;
