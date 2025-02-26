@@ -7,6 +7,7 @@ entity gen_tiles is
             N_CORDIC: natural := 16;
             N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
             N_DATA: natural := 16; --Memoria de 32kx16bit -> "words" son de 1bit
+            MAX_CORDIC_COMP_VALUE: natural := 8192; --Valor máximo con el que puede venir una componente del cordic
             MAX_VAL : natural := 50 --Se calculó en base a BRAM y resolución de 480x640
     );
     port(
@@ -22,7 +23,7 @@ entity gen_tiles is
 end gen_tiles;
 
 architecture gen_tiles_arch of gen_tiles is
-    constant cordic_scale: integer := 2**(N_CORDIC - 2)/MAX_VAL;
+    constant cordic_scale: integer := MAX_CORDIC_COMP_VALUE/MAX_VAL;
     signal x_coord: integer := 0;
     signal y_coord: integer := 0;
     signal bit_index: integer := 0;

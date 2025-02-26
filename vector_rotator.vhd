@@ -12,7 +12,7 @@ entity vector_rotator is
 		N_DATA: natural := 16;
 		BAUD_RATE: integer := 115200;
 		CLOCK_RATE: integer := 125E6;
-		CORDIC_ITERATIONS: natural := 15;  --
+		CORDIC_ITERATIONS: natural := 10;  --
 		CORDIC_CTL_CYCLES: natural := 125E6/50; --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
 		COORDS_MAX_TILE_VALUE: natural := 50 --Máximo valor que pueden tomar las coordenadas x e y en tiles
 	);
@@ -78,7 +78,8 @@ begin
 		generic map (
 			CLOCK_RATE  => CLOCK_RATE,
 			N => N_CORDIC,
-			CORDIC_CYCLES => 500
+			CORDIC_CYCLES => 500,
+			MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3)
 		)
 		port map(
 			clk => clk_pin,
@@ -98,7 +99,8 @@ begin
 	CORDIC: entity work.cordic
 		generic map(
 			N => N_CORDIC, 
-			ITERATIONS => CORDIC_ITERATIONS
+			ITERATIONS => CORDIC_ITERATIONS,
+			GAIN_DECIMALS => 5
 			)
 		port map(
 			x0 => x_i,
@@ -113,22 +115,23 @@ begin
 			mode => '0',
 			busy => busy
 		);
-	-- TILE_GEN: entity work.gen_tiles
-	-- generic map(
-	-- 	N_CORDIC => N_CORDIC,
-	-- 	N_ADDRESS => N_ADDRESS,
-	-- 	N_DATA => N_DATA,
-	-- 	MAX_VAL => COORDS_MAX_TILE_VALUE
-	-- )
-	-- port map(
-	-- 	rst => rst_pin,
-	-- 	clk => clk_pin,
-	-- 	x_in => x_o,
-	-- 	y_in => y_o,
-	-- 	cordic_busy => busy,
-	-- 	wr => wr_a,
-	-- 	addr => addr_a,
-	-- 	wr_data => wr_data_a
-	-- );
+	TILE_GEN: entity work.gen_tiles
+	generic map(
+		N_CORDIC => N_CORDIC,
+		N_ADDRESS => N_ADDRESS,
+		N_DATA => N_DATA,
+		MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3),
+		MAX_VAL => COORDS_MAX_TILE_VALUE
+	)
+	port map(
+		rst => rst_pin,
+		clk => clk_pin,
+		x_in => x_o,
+		y_in => y_o,
+		cordic_busy => busy,
+		wr => wr_a,
+		addr => addr_a,
+		wr_data => wr_data_a
+	);
 	
 end;

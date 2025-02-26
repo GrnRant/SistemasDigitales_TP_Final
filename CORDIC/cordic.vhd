@@ -12,7 +12,10 @@ entity cordic is
     --N cantidad de bits para cuentas, ITERATIONS cantidad de iteraciones, N_CONT bits del contador elegido 
     --en función de la cantidad de ITERATIONS (no debe superares) y FRAC cantidad de decimales en cuentas
     --(es decir cantidad de bits de la parte fraccionaria de los números en binario)  
-    generic(N: natural := 16; N_CONT : natural := 4; ITERATIONS: natural := 15; GAIN_DECIMALS: natural := 3);
+    generic(N: natural := 16; 
+            N_CONT : natural := 4; 
+            ITERATIONS: natural := 15; 
+            GAIN_DECIMALS: natural := 3);
     port(x0 : in signed(N-1 downto 0);  --Valor de entrada al cordic
         y0 : in signed(N-1 downto 0);   --Valor de entrada al cordic
         z0 : in signed(N-1 downto 0);   --Valor de entrada al cordic
@@ -44,7 +47,7 @@ architecture cordic_rolled_arch of cordic is
     constant betas: int_array(ITERATIONS-1 downto 0) := gen_atan_table(N, ITERATIONS); --LUT con betas por iteración
     signal beta : signed(N-1 downto 0); --Variable auxiliar
     signal count_en : std_logic; --Variable auxiliar para habilitación del contador
-    constant gain_scaled : integer := integer(cordic_gain(ITERATIONS)*10.0**GAIN_DECIMALS); --Ganancia de CORDIC
+    constant GAIN_SCALED : integer := integer(cordic_gain(ITERATIONS)*10.0**GAIN_DECIMALS); --Ganancia de CORDIC
     
 begin
     --PRECORDIC
@@ -141,8 +144,8 @@ begin
     end if;
     if i = ITERATIONS-1 then
         count_en <= '0';
-        xr <= to_signed(to_integer(x_act)*10**GAIN_DECIMALS/gain_scaled, N);
-        yr <= to_signed(to_integer(y_act)*10**GAIN_DECIMALS/gain_scaled, N);
+        xr <= to_signed(to_integer(x_act)*10**GAIN_DECIMALS/GAIN_SCALED, N);
+        yr <= to_signed(to_integer(y_act)*10**GAIN_DECIMALS/GAIN_SCALED, N);
         zr <= z_act;
     end if;
 end process;

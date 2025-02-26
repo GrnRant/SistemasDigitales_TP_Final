@@ -9,7 +9,8 @@ entity cordic_ctl is
 	generic (
 		CLOCK_RATE : integer := 50E6;
 		N : natural := 16;
-		CORDIC_CYCLES : natural := 125E6/50
+		CORDIC_CYCLES : natural := 125E6/50;
+		MAX_CORDIC_COMP_VALUE: natural := 8192
 	);
 	port (
 		-- Write side inputs
@@ -37,10 +38,10 @@ architecture cordic_ctl_arq of cordic_ctl is
 	signal ang_chg_trigger : std_logic;
 	signal cordic_busy_prev : std_logic;
 	constant X_INIT : signed(N - 1 downto 0) := to_signed(0, N); --Posición inicial en Y es 0.75 del máximo valor positivo que puede tener
-	constant Y_INIT : signed(N - 1 downto 0) := to_signed(integer(2**(N-2)) , N); --Posición inicial el máximo valor positivo que puede tener (se toma en cuenta que hay que realizar cuentas también)
+	constant Y_INIT : signed(N - 1 downto 0) := to_signed(MAX_CORDIC_COMP_VALUE, N); --Posición inicial el máximo valor positivo que puede tener (se toma en cuenta que hay que realizar cuentas también)
 	constant ANG_ZERO : signed(N - 1 downto 0) := to_signed(0, N); --Ángulo igual a cero
-	constant ANG_STEP : signed(N - 1 downto 0) := to_signed(integer((2.0**(N-1)-1.0) / 256.0), N); --Pasos de 0.703125 (escalados)
-	constant ANG_STEP_NEG : signed(N - 1 downto 0) := to_signed(integer((2.0**(N-1)-1.0) / 256.0 + 360.0), N); --Pasos de 0.703125 (escalados horario, precordic lo va a volver ángulo negativo)
+	constant ANG_STEP : signed(N - 1 downto 0) := to_signed(integer((2.0**(N-1)-1.0)/256.0), N); --Pasos de 0.703125 (escalados)
+	constant ANG_STEP_NEG : signed(N - 1 downto 0) := to_signed(integer(-(2.0**(N-1)-1.0)/256.0), N); --Pasos de 0.703125 (escalados horario, precordic lo va a volver ángulo negativo)
 	constant ANG_CORDIC_SCALE : integer := (2**(N-1)-1)/180; --Escala para los ángulos que se ingresan al cordic
 
 begin

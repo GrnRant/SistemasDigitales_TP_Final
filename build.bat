@@ -30,12 +30,19 @@ ghdl -a --workdir=build vga/gen_tiles.vhd
 @REM GENERAL
 ghdl -a --workdir=build vector_rotator.vhd
 
-@REM test bench para simulación
-ghdl -a --workdir=build vector_rotator_tb.vhd
+@REM test benches para simulación
+ghdl -a --workdir=build rot_a_ang_tb.vhd
+ghdl -a --workdir=build rot_c_h_tb.vhd
+ghdl -a --workdir=build rot_c_a_tb.vhd
+
 
 @REM Run
-ghdl -r --workdir=build vector_rotator_tb --vcd=build/vector_rotator_tb.vcd
+@REM ghdl -r --workdir=build rot_a_ang_tb --vcd=build/rot_a_ang_tb.vcd
+ghdl -r --workdir=build rot_c_h_tb --vcd=build/rot_c_h_tb.vcd
+@REM ghdl -r --workdir=build rot_c_a_tb --vcd=build/rot_c_a_tb.vcd
 
 @REM Abrir simulación
 cd build
-gtkwave vector_rotator_tb.vcd
+@REM gtkwave rot_a_ang_tb.vcd
+gtkwave rot_c_h_tb.vcd
+@REM gtkwave rot_c_a_tb.vcd

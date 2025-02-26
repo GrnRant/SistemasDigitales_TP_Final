@@ -7,10 +7,10 @@ use std.textio.all;
 library work;
 use work.utils.all;
 
-entity vector_rotator_tb is 
-end entity vector_rotator_tb;
+entity rot_a_ang_tb is 
+end entity rot_a_ang_tb;
 
-architecture vector_rotator_tb_arq of vector_rotator_tb is
+architecture rot_a_ang_tb_arq of rot_a_ang_tb is
     constant CLOCK_RATE: natural := 125E6;
     constant CLOCK_SWITCH_TIME: time := 4 ns; --Medio período del clock en ns
     constant BAUD_RATE: natural := 115200;
@@ -32,11 +32,11 @@ begin
 
     TEST: process is 
     begin
-        report "Se inicia la prueba"
+        report "Inicio test ROT A 45"
         severity note;
         
         wait until rst_tb = '0';
-        wait for 100 ns;
+        wait for 10 ns;
       
         rxd_tb <= '1';  -- IDLE
         wait for 8681 ns; -- Tiempo de un bit: 1/BAUD_RATE. En este caso BAUD_RATE = 115200 => 8680,555 => 8681 redondeando
@@ -387,15 +387,6 @@ begin
        
        rxd_tb <= '1'; -- IDLE
        wait for 2 ms;
-       --wait for 8681 ns;
-       
-       report "Se envio comando de rotacion"
-       severity note;
-    
-       --wait until ack_tb = '1';
-       
-       report "Termina Prueba"
-       severity note;
        
        -- Se aborta la simulacion
         assert false report
@@ -421,4 +412,4 @@ begin
 		rxd_pin => rxd_tb
 	);
 
-end architecture vector_rotator_tb_arq;
+end architecture rot_a_ang_tb_arq;
