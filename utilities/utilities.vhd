@@ -70,6 +70,9 @@ package body utils is
     function shift_right(reg : signed; shift : natural) return signed is
         variable aux : signed(reg'range) := (others => '0');
     begin
+        if reg = 0 then 
+          return reg;
+        end if;
         for i in (reg'length - 1) downto shift loop
             aux(i) := '0'; 
         end loop;

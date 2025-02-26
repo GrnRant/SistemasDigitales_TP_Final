@@ -19,7 +19,8 @@ entity cmd_ctl is
 		rx_data_rdy : in std_logic; -- Data ready output of uart_rx
 		-- Salidas
 		cmd_out : out cordic_ctl_cmds;
-		ang_out : out signed(N - 1 downto 0)
+		ang_out : out signed(N - 1 downto 0);
+		ang_chg : out std_logic
 	);
 end;
 
@@ -28,16 +29,28 @@ architecture cmd_ctl_arq of cmd_ctl is
     signal current_state : cmd_ctl_states := S0;
 	signal rx_data_rdy_prev: std_logic := '0';
 	signal ang: integer := 0;
+	constant ANG_CHG_PIN_CYCLES: natural := 2; --Cantidad de ciclos en los que se mantiene la señal de ang_chg
 
 begin
 	--FSM de cordic_ctl
 	CORDIC_CTL_FSM: process(clk_pin)
+		variable ang_chg_cycle_count: natural := ANG_CHG_PIN_CYCLES - 1;
 		begin
 		if rising_edge(clk_pin) then
+			--Reset
 			if rst_pin = '1' then
 				cmd_out <= CMD_NONE;
 				ang <= 0; 
-			elsif (rx_data_rdy = '1' and rx_data_rdy_prev = '0') then
+				ang_chg <= '0';
+			end if;
+			--Reseteado de pin de ang_chg
+			if ang_chg_cycle_count >= (ANG_CHG_PIN_CYCLES - 1) then
+				ang_chg <= '0';
+			else
+				ang_chg_cycle_count := ang_chg_cycle_count + 1;
+			end if;
+			--FSM de UART
+			if (rx_data_rdy = '1' and rx_data_rdy_prev = '0') then
 				C_CORDIC_CTL_STATES : case current_state is
 					when S0 =>
 						ang <= 0;
@@ -114,6 +127,8 @@ begin
 						elsif rx_data = NEW_LINE_CHAR then
 							current_state <= S0;
 							cmd_out <= CMD_A;
+							ang_chg <= '1';
+							ang_chg_cycle_count := 0; --Para comenzar conteo de ciclos de pin ang_chg en alto
 						else
 							current_state <= S0;
 						end if;
@@ -124,12 +139,16 @@ begin
 						elsif rx_data = NEW_LINE_CHAR then
 							current_state <= S0;
 							cmd_out <= CMD_A;
+							ang_chg <= '1';
+							ang_chg_cycle_count := 0; --Para comenzar conteo de ciclos de pin ang_chg en alto
 						else
 							current_state <= S0;
 						end if;
 					when S_NUM3 =>
 						if rx_data = NEW_LINE_CHAR then
 							cmd_out <= CMD_A;
+							ang_chg <= '1';
+							ang_chg_cycle_count := 0; --Para comenzar conteo de ciclos de pin ang_chg en alto
 						end if;
 						current_state <= S0;
 					when others =>

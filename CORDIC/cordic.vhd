@@ -22,6 +22,7 @@ entity cordic is
         busy : out std_logic;           --Igual a '1' mientras el cordic esté trabajando
         start : in std_logic;           --Indica el inicio para el cordic rolled y reset para el unrolled 
         clk : in std_logic;             --Clock del cordic
+        rst : in std_logic;             --Reset del cordic
         mode : in std_logic             --Modo de operacion (rotación => '1', vector => '0')
     );
 end cordic;
@@ -114,9 +115,18 @@ P_MAIN: process(clk, i)
 variable pre_start: std_logic := '1';
 begin
     if rising_edge(clk) then
+        --Es como una especie de Reset
+        if rst = '1' then
+            count_en <= '0';
+            xr <= (others => '0');
+            yr <= (others => '0');
+            zr <= (others => '0');
         --Detección de inicio
-        if pre_start = '1' and start = '0' then
+        elsif pre_start = '1' and start = '0' then
             count_en <= '1';
+            xr <= (others => '0');
+            yr <= (others => '0');
+            zr <= (others => '0');
         end if;
         pre_start := start;
     end if;
@@ -131,12 +141,12 @@ begin
     end if;
     if i = ITERATIONS-1 then
         count_en <= '0';
+        xr <= to_signed(to_integer(x_act)*10**GAIN_DECIMALS/gain_scaled, N);
+        yr <= to_signed(to_integer(y_act)*10**GAIN_DECIMALS/gain_scaled, N);
+        zr <= z_act;
     end if;
 end process;
 
---Valores finales (se los divide por ganancia de cordic)
-xr <= to_signed(to_integer(x_act)*10**GAIN_DECIMALS/gain_scaled, N) when i = (ITERATIONS - 1) else (others => '0');
-yr <= to_signed(to_integer(y_act)*10**GAIN_DECIMALS/gain_scaled, N) when i = (ITERATIONS - 1) else (others => '0');
-zr <= z_act;
+busy <= count_en;
 
 end cordic_rolled_arch;

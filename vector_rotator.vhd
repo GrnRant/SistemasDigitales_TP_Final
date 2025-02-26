@@ -31,7 +31,7 @@ architecture vector_rotator_arq of vector_rotator is
 	signal rx_data: std_logic_vector(7 downto 0);
 	--CMDS_CTL/CORDIC/TILES_GEN
 	signal cmd: cordic_ctl_cmds;
-	signal cmd_dummy: std_logic_vector(5 downto 0);
+	signal ang_chg: std_logic;
 	signal ang_a: signed(N_CORDIC - 1 downto 0);
 	signal x_i: signed(N_CORDIC - 1 downto 0);
 	signal y_i: signed(N_CORDIC - 1 downto 0);
@@ -66,34 +66,33 @@ begin
 			N => N_CORDIC
 		)
 		port map(
-			clk_pin => clk_pin,  	-- Clock input (from pin)
-			rst_pin => rst_pin,  	-- Active HIGH reset (from pin)
-			rx_data => rx_data, -- Data output of uart_rx
+			clk_pin => clk_pin,
+			rst_pin => rst_pin, 
+			rx_data => rx_data, 
 			rx_data_rdy => rx_data_rdy,
-			-- Salidas
 			cmd_out => cmd,
-			ang_out => ang_a
+			ang_out => ang_a,
+			ang_chg => ang_chg
 		);
 	CORDIC_CTL: entity work.cordic_ctl
 		generic map (
 			CLOCK_RATE  => CLOCK_RATE,
 			N => N_CORDIC,
-			CORDIC_CYCLES => 50E6/50
+			CORDIC_CYCLES => 500
 		)
 		port map(
-			-- Write side inputs
-			clk => clk_pin, -- Clock input (from pin)
-			rst => rst_pin, -- Active HIGH reset (from pin)
-			cmd_in => cmd, -- Comandos recibidos a ejecutar
-			ang_in => ang_a, -- Angulo de entrada para ciertos comandos
-			--Outputs del cordic (inputs de cordic_ctl)
-			x_cordic_out => x_o, --Valor de salida del cordic
-			y_cordic_out => y_o, --Valor de salida del cordic
-			z_cordic_out => z_o, --Valor de salida del cordic
-			--Inputs al cordic (outputs de cordic_ctl)				
-			x_cordic_in => x_i, --Valor de entrada al cordic
-			y_cordic_in => y_i, --Valor de entrada al cordic
-			z_cordic_in => z_i, --Valor de entrada al cordic
+			clk => clk_pin,
+			rst => rst_pin, 
+			cmd_in => cmd, 
+			ang_in => ang_a, 
+			ang_chg => ang_chg,
+			x_cordic_out => x_o, 
+			y_cordic_out => y_o,
+			z_cordic_out => z_o,
+			cordic_busy => busy, 			
+			x_cordic_in => x_i,
+			y_cordic_in => y_i, 
+			z_cordic_in => z_i,
 			cordic_start => cordic_start
 		);
 	CORDIC: entity work.cordic
@@ -107,28 +106,29 @@ begin
 			z0 => z_i,
 			xr => x_o,
 			yr => y_o,
-			zr => y_o,
+			zr => z_o,
 			start => cordic_start, 
 			clk => clk_pin,
-			mode => '1',
+			rst => rst_pin,
+			mode => '0',
 			busy => busy
 		);
-	TILE_GEN: entity work.gen_tiles
-	generic map(
-		N_CORDIC => N_CORDIC,
-		N_ADDRESS => N_ADDRESS,
-		N_DATA => N_DATA,
-		MAX_VAL => COORDS_MAX_TILE_VALUE
-	)
-	port map(
-		rst => rst_pin,
-		clk => clk_pin,
-		x_in => x_o,
-		y_in => y_o,
-		cordic_busy => busy,
-		wr => wr_a,
-		addr => addr_a,
-		wr_data => wr_data_a
-	);
+	-- TILE_GEN: entity work.gen_tiles
+	-- generic map(
+	-- 	N_CORDIC => N_CORDIC,
+	-- 	N_ADDRESS => N_ADDRESS,
+	-- 	N_DATA => N_DATA,
+	-- 	MAX_VAL => COORDS_MAX_TILE_VALUE
+	-- )
+	-- port map(
+	-- 	rst => rst_pin,
+	-- 	clk => clk_pin,
+	-- 	x_in => x_o,
+	-- 	y_in => y_o,
+	-- 	cordic_busy => busy,
+	-- 	wr => wr_a,
+	-- 	addr => addr_a,
+	-- 	wr_data => wr_data_a
+	-- );
 	
 end;
