@@ -13,11 +13,19 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity gen_pixels is
+	generic(
+		N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
+		N_DATA: natural := 16; --Memoria de 32kx16bit -> "words" son de 1bit
+		TILES_SCALE: natural := 4
+	);
 	port(
-		clk, reset: in std_logic;
-		sw: in std_logic_vector (2 downto 0);
-		pixel_x, pixel_y : in std_logic_vector (9 downto 0);
+		clk: in std_logic;
+		reset: in std_logic;
+		pixel_x: in std_logic_vector (9 downto 0);
+		pixel_y: in std_logic_vector (9 downto 0);
 		ena: in std_logic;
+		rd_data: in unsigned(N_DATA - 1 downto 0);
+		addr: out unsigned(N_ADDRESS - 1 downto 0);
 		rgb : out std_logic_vector(2 downto 0)
 	);
 	
@@ -26,18 +34,40 @@ end gen_pixels;
 architecture gen_pixels_arch of gen_pixels is
 
 	signal rgb_reg: std_logic_vector(2 downto 0);
+	signal tile_x: integer := 0;
+	signal tile_y: integer := 0;
+	signal tile_index: integer;
+	signal tile_bit: std_logic;
+	constant H: natural := 480;
+	constant W: natural := 640;
 
 begin
-
 	process(clk, reset)
 	begin
-		if reset = '1' then
-			rgb_reg <= (others => '0');
-		elsif rising_edge(clk) then
-			if (to_integer(unsigned(pixel_x)) mod 16 = 0) or (to_integer(unsigned(pixel_y)) mod 16 = 0) then
-				rgb_reg <= sw;
+		if rising_edge(clk) then
+			if reset = '1' then
+				rgb_reg <= (others => '0');
+				addr <= (others => '0');
+				tile_x <= 0;
+				tile_y <= 0;
+			end if;
+
+			-- Coordenas de los tiles
+			tile_x <= to_integer(unsigned(pixel_x)) / TILES_SCALE;
+			tile_y <= to_integer(unsigned(pixel_y)) / TILES_SCALE;
+
+			-- Address en RAM del tile
+			addr <= to_unsigned((tile_y * W/TILES_SCALE + tile_x) / 16, N_ADDRESS);
+			tile_index <= (tile_y * W/TILES_SCALE + tile_x) mod 16;
+
+			-- Leer valor del tile
+			tile_bit <= rd_data(tile_index);
+
+			-- Asignar 
+			if tile_bit = '1' then
+				rgb_reg <= "000"; -- Negro
 			else
-				rgb_reg <= "001";
+				rgb_reg <= "111"; -- Blanco
 			end if;
 		end if;
 	end process;

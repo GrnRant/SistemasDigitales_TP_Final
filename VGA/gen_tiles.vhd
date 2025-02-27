@@ -66,7 +66,7 @@ begin
                 if p_tile = P_T/2 or l_tile = L_T/2 then
                     bit_value <= '1';
                 --Vector
-                elsif p_tile = ((P_T/2 + x_comp)/n) and l_tile = ((L_T/2 + y_comp)/n) then
+                elsif p_tile = ((P_T/2 + x_comp)/n) and l_tile = ((L_T/2 - y_comp)/n) then
                     bit_value <= '1';
                     n := n + 1;
                 --Cualquier otro tile

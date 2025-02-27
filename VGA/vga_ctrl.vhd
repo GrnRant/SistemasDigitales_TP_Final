@@ -14,11 +14,18 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity vga_ctrl is
+	generic(
+		N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
+		N_DATA: natural := 16 --Memoria de 32kx16bit -> "words" son de 1bit
+	);
 	port(
-		clk, rst: in std_logic;
-		sw: in std_logic_vector (2 downto 0);
-		hsync , vsync : out std_logic;
-		rgb : out std_logic_vector(2 downto 0)
+		clk: in std_logic;
+		rst: in std_logic;
+		rd_data: in unsigned(N_DATA - 1 downto 0);
+		addr: out unsigned(N_ADDRESS - 1 downto 0);
+		hsync: out std_logic;
+		vsync: out std_logic;
+		rgb: out std_logic_vector(2 downto 0)
 	);
 	
 	-- attribute LOC: string;
@@ -53,26 +60,20 @@ begin
 		);
 
 	pixeles: entity work.gen_pixels
+		generic map(
+			N_ADDRESS => N_ADDRESS,
+			N_DATA => N_DATA,
+			TILES_SCALE => 4
+		)
 		port map(
 			clk		=> clk,
 			reset	=> rst,
-			sw		=> sw,
+			addr	=> addr,
+			rd_data	=> rd_data,
 			pixel_x	=> pixel_x,
 			pixel_y	=> pixel_y,
 			ena		=> video_on,
 			rgb		=> rgb
 		);
-		
-	-- -- rgb buffer
-	-- process(clk, rst)
-	-- begin
-		-- if rst = '1' then
-			-- rgb_reg <= (others => '0');
-		-- elsif rising_edge(clk) then
-			-- rgb_reg <= sw;
-		-- end if;
-	-- end process;
-
-	-- rgb <= rgb_reg when video_on = '1' else "000";
 
 end vga_ctrl_arch;
