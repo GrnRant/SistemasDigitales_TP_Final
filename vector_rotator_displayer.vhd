@@ -5,7 +5,7 @@ use IEEE.numeric_std.all;
 library work;
 use work.utils.all;
 
-entity vector_rotator is
+entity vector_rotator_displayer is
 	generic(
 		N_CORDIC: natural := 16;
 		N_ADDRESS: natural := 11;
@@ -27,7 +27,7 @@ entity vector_rotator is
 end;
 	
 
-architecture vector_rotator_arq of vector_rotator is
+architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 	--UART/CMD_CTL
 	signal rx_data_rdy: std_logic;
 	signal rx_data: std_logic_vector(7 downto 0);
@@ -45,10 +45,50 @@ architecture vector_rotator_arq of vector_rotator is
 	signal busy: std_logic;
 	--TILES_GEN/BRAM
 	signal wr_a: std_logic;
+    signal wr_a_aux: std_logic_vector(0 downto 0);
 	signal addr_a: unsigned(N_ADDRESS - 1 downto 0);
 	signal wr_data_a: unsigned(N_DATA - 1 downto 0);
+    --BRAM/VGA_CTL
+	signal addr_b: unsigned(N_ADDRESS - 1 downto 0);
+	signal rd_data_b: unsigned(N_DATA - 1 downto 0);
+    signal rd_data_b_aux: std_logic_vector(N_DATA - 1 downto 0);
+    --VGA_CTL
+    signal clk_vga: std_logic;
+	signal clk_vga_aux: std_logic;
+	signal clk_vga_locked: std_logic;
+    signal hsync: std_logic;
+    signal vsync: std_logic;
+    signal rgb: std_logic_vector(2 downto 0);
+
+    component vram is
+    port (
+      clka : in std_logic;
+      wea : in std_logic_vector(0 DOWNTO 0);
+      addra : in std_logic_vector(10 DOWNTO 0);
+      dina : in std_logic_vector(15 DOWNTO 0);
+      clkb : in std_logic;
+      addrb : in std_logic_vector(10 DOWNTO 0);
+      doutb : out std_logic_vector(15 DOWNTO 0)
+    );
+    end component;
+
+	component clk_wiz_vga
+	port
+	(-- Clock in ports
+	-- Clock out ports
+	clk_50mhz          : out    std_logic;
+	-- Status and control signals
+	reset             : in     std_logic;
+	locked            : out    std_logic;
+	clk_in           : in     std_logic
+	);
+	end component;
 
 begin
+    wr_a_aux(0) <= wr_a;
+    rd_data_b <= unsigned(rd_data_b_aux);
+	clk_vga <= clk_vga_aux when (clk_vga_locked = '0') else '0';
+
 	UART : entity work.uart_top
 	generic map(
 		CLOCK_RATE => CLOCK_RATE,
@@ -136,6 +176,41 @@ begin
 		wr => wr_a,
 		addr => addr_a,
 		wr_data => wr_data_a
+	);
+    VIDEO_MEMORY: vram
+    port map(
+        clka => clk_pin,
+        wea => wr_a_aux,
+        addra => std_logic_vector(addr_a),
+        dina => std_logic_vector(wr_data_a),
+        clkb => clk_pin,
+        addrb => std_logic_vector(addr_b),
+        doutb => rd_data_b_aux
+    );
+
+    VGA_CONTROLLER: entity work.vga_ctrl
+    generic map(
+		N_ADDRESS => N_ADDRESS,
+		N_DATA => N_DATA
+	)
+	port map(
+		clk => clk_vga,
+		rst => rst_pin,
+		rd_data => rd_data_b,
+		addr => addr_b,
+		hsync => hsync,
+		vsync => vsync,
+		rgb => rgb
+	);
+	VGA_CLK_GEN: clk_wiz_vga
+	port map
+	(-- Clock in ports
+	-- Clock out ports
+	clk_50mhz => clk_vga_aux,
+	-- Status and control signals
+	reset => rst_pin,
+	locked => clk_vga_locked,
+	clk_in => clk_pin
 	);
 	
 end;

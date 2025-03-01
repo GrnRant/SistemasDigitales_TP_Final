@@ -15,8 +15,8 @@ use ieee.numeric_std.all;
 
 entity vga_ctrl is
 	generic(
-		N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
-		N_DATA: natural := 16 --Memoria de 32kx16bit -> "words" son de 1bit
+		N_ADDRESS: natural := 11; --Memoria de 16x1200bits -> address máximo es 32000
+		N_DATA: natural := 16 --Memoria de 16x1200bits -> "words" son de 1bit
 	);
 	port(
 		clk: in std_logic;

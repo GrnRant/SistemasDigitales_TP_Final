@@ -5,8 +5,8 @@ use ieee.numeric_std.all;
 entity gen_tiles is
     generic(
             N_CORDIC: natural := 16;
-            N_ADDRESS: natural := 15; --Memoria de 32kx16bit -> address máximo es 32000
-            N_DATA: natural := 16; --Memoria de 32kx16bit -> "words" son de 1bit
+            N_ADDRESS: natural := 11; --Memoria de 16x1200bits -> address máximo es 32000
+            N_DATA: natural := 16; --Memoria de 16x1200bits -> "words" son de 1bit
             MAX_CORDIC_COMP_VALUE: natural := 8192; --Valor máximo con el que puede venir una componente del cordic
             MAX_TILE_VAL: natural := 50; --Se calculó en base a BRAM y resolución de 480x640
             L_T: natural := 120;

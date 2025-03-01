@@ -15,7 +15,7 @@ architecture rot_a_ang_tb_arq of rot_a_ang_tb is
     constant CLOCK_SWITCH_TIME: time := 4 ns; --Medio período del clock en ns
     constant BAUD_RATE: natural := 115200;
     constant N_CORDIC: natural := 16;
-    constant N_ADDRESS: natural := 15;
+    constant N_ADDRESS: natural := 11;
     constant N_DATA: natural := 16;
     constant CORDIC_ITERATIONS: natural := 16;
     constant CORDIC_CTL_CYCLES: natural := 500;
