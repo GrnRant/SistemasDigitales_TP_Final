@@ -22,7 +22,10 @@ entity vector_rotator_displayer is
 		--Write side inputs
 		clk_pin: in std_logic;		-- Clock input (from pin)
 		rst_pin: in std_logic;		-- Active HIGH reset (from pin)
-		rxd_pin: in std_logic 		-- Uart input
+		rxd_pin: in std_logic; 		-- Uart input
+		hsync: out std_logic;
+		vsync: out std_logic;
+		rgb: out std_logic_vector(2 downto 0)
 	);
 end;
 	
@@ -56,9 +59,6 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
     signal clk_vga: std_logic;
 	signal clk_vga_aux: std_logic;
 	signal clk_vga_locked: std_logic;
-    signal hsync: std_logic;
-    signal vsync: std_logic;
-    signal rgb: std_logic_vector(2 downto 0);
 
     component vram is
     port (
