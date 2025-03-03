@@ -13,7 +13,7 @@ entity vector_rotator_displayer is
 		BAUD_RATE: integer := 115200;
 		CLOCK_RATE: integer := 125E6;
 		CORDIC_ITERATIONS: natural := 16;  --
-		CORDIC_CTL_CYCLES: natural := 500 --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
+		CORDIC_CTL_CYCLES: natural := 20000 --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
 	);
 	port(
 		--Write side inputs
@@ -42,8 +42,11 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 	signal z_i: signed(N_CORDIC - 1 downto 0);
 	signal x_o: signed(N_CORDIC - 1 downto 0);
 	signal y_o: signed(N_CORDIC - 1 downto 0);
-	signal x_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal x_i_aux: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal y_i_aux: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal z_i_aux: std_logic_vector(N_CORDIC - 1 downto 0);
 	signal y_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal x_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
 	signal z_o: signed(N_CORDIC - 1 downto 0);
 	signal cordic_start: std_logic;
 	signal busy: std_logic;
@@ -94,6 +97,9 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 		clk : in std_logic;
 		probe_in0 : in std_logic_vector(15 downto 0);
 		probe_in1 : in std_logic_vector(15 downto 0);
+		probe_in2 : in std_logic_vector(15 downto 0);
+		probe_in3 : in std_logic_vector(15 downto 0);
+		probe_in4 : in std_logic_vector(15 downto 0);
 		probe_out0 : out std_logic_vector(0 downto 0) 
 	);
 	end component;
@@ -113,6 +119,9 @@ begin
 	rst_pin <= rst_vio(0);
 	x_o_aux <= std_logic_vector(x_o);
 	y_o_aux <= std_logic_vector(y_o);
+	x_i_aux <= std_logic_vector(x_i);
+	y_i_aux <= std_logic_vector(y_i);
+	z_i_aux <= std_logic_vector(z_i);
 	rgb <= rgb_ila;
 	vsync <= vsync_ila(0);
 
@@ -242,6 +251,9 @@ begin
 		clk => clk_pin,
 		probe_in0 => x_o_aux,
 		probe_in1 => y_o_aux,
+		probe_in2 => x_i_aux,
+		probe_in3 => y_i_aux,
+		probe_in4 => z_i_aux,
 		probe_out0 => rst_vio
 	);
 	ILA_VGA_RGB: ila_0

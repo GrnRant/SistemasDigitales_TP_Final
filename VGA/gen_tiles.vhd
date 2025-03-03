@@ -30,9 +30,9 @@ architecture gen_tiles_arch of gen_tiles is
     signal y_comp: integer := 0;
     signal x_pos: integer := 0;
     signal y_pos: integer := 0;
-    signal p_tile: integer := 0; --Píxel actual
-    signal l_tile: integer := 0; --Línea actual
-    signal bit_index: integer := 0; --Número de píxel, ubicado en (p_tile, l_tile)
+    signal p_tile: natural := 0; --Píxel actual
+    signal l_tile: natural := 0; --Línea actual
+    signal bit_index: natural := 0; --Número de píxel, ubicado en (p_tile, l_tile)
     signal bit_value: std_logic := '0'; --Valor de píxel actual
     signal busy_pre_state: std_logic := '0';
     signal wr_aux: std_logic := '0';

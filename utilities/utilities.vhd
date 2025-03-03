@@ -41,8 +41,6 @@ package utils is
     function gen_atan_table(size : natural; iterations : natural) return int_array;
     --Devuelve la ganacia cordic según la cantidad de iteraciones
     function cordic_gain(iterations : positive) return real;
-    --Hace cierta cantidad de desplazamientos aritméticos (agrega unos) a derecha
-    function shift_right(reg : signed; shift : natural) return signed;
 
 end utils;
 
@@ -67,19 +65,4 @@ package body utils is
         return g;
       end function;
     ----------------------------------------------------------------------------------
-    function shift_right(reg : signed; shift : natural) return signed is
-        variable aux : signed(reg'range) := (others => '0');
-    begin
-        if reg = 0 then 
-          return reg;
-        end if;
-        for i in (reg'length - 1) downto shift loop
-            aux(i) := '0'; 
-        end loop;
-        for i in (shift - 1) downto 0 loop
-            aux(i) := reg(i+shift); 
-        end loop;
-        return aux;
-    end function;
-    -----------------------------------------------------------------------------------
 end utils;
