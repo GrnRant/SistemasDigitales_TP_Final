@@ -67,7 +67,7 @@ begin
 		)
 		port map(
 			clk		=> clk,
-			reset	=> rst,
+			rst		=> rst,
 			addr	=> addr,
 			rd_data	=> rd_data,
 			pixel_x	=> pixel_x,

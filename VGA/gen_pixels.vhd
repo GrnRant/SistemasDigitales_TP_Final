@@ -20,7 +20,7 @@ entity gen_pixels is
 	);
 	port(
 		clk: in std_logic;
-		reset: in std_logic;
+		rst: in std_logic;
 		pixel_x: in std_logic_vector (9 downto 0);
 		pixel_y: in std_logic_vector (9 downto 0);
 		ena: in std_logic;
@@ -42,20 +42,17 @@ architecture gen_pixels_arch of gen_pixels is
 	constant W: natural := 640;
 
 begin
-	process(clk, reset)
+	process(clk)
 	begin
 		if rising_edge(clk) then
-			if reset = '1' then
-				rgb_reg <= (others => '0');
-				addr <= (others => '0');
+			if rst = '1' then
 				tile_x <= 0;
 				tile_y <= 0;
+			else
+				-- Coordenas de los tiles
+				tile_x <= to_integer(unsigned(pixel_x)) / TILES_SCALE;
+				tile_y <= to_integer(unsigned(pixel_y)) / TILES_SCALE;
 			end if;
-
-			-- Coordenas de los tiles
-			tile_x <= to_integer(unsigned(pixel_x)) / TILES_SCALE;
-			tile_y <= to_integer(unsigned(pixel_y)) / TILES_SCALE;
-
 			-- Address en RAM del tile
 			addr <= to_unsigned((tile_y * W/TILES_SCALE + tile_x) / 16, N_ADDRESS);
 			tile_index <= (tile_y * W/TILES_SCALE + tile_x) mod 16;

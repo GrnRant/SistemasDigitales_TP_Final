@@ -8,7 +8,7 @@ entity gen_tiles is
             N_ADDRESS: natural := 11; --Memoria de 16x1200bits -> address máximo es 32000
             N_DATA: natural := 16; --Memoria de 16x1200bits -> "words" son de 1bit
             MAX_CORDIC_COMP_VALUE: natural := 8192; --Valor máximo con el que puede venir una componente del cordic
-            MAX_TILE_VAL: natural := 50; --Se calculó en base a BRAM y resolución de 480x640
+            MAX_TILE_VAL: natural := 32; --Se calculó en base a BRAM, resolución de 480x640 y potencia de 2
             L_T: natural := 120;
             P_T: natural := 160
     );
@@ -36,10 +36,12 @@ architecture gen_tiles_arch of gen_tiles is
     signal bit_value: std_logic := '0'; --Valor de píxel actual
     signal busy_pre_state: std_logic := '0';
     signal wr_aux: std_logic := '0';
+
 begin
     P_GEN_TILES_MAIN: process(clk)
-    variable n: natural := 1;
-
+    variable dx, dy : integer;
+    variable line_distance : integer;
+    variable vector_length : integer;
     begin
         if rising_edge(clk) then
             --Reset
@@ -62,13 +64,30 @@ begin
 
             --Si está habilitada la escritura, setear siguiente tile
             if wr_aux = '1' then
+                dx := p_tile - P_T/2;  --Distancia al origen del p_tile
+                dy := L_T/2 - l_tile;  -- Distancia al origen del l_tile
+
                 --Ejes
                 if p_tile = P_T/2 or l_tile = L_T/2 then
                     bit_value <= '1';
-                --Vector
-                elsif p_tile = ((P_T/2 + x_comp)/n) and l_tile = ((L_T/2 - y_comp)/n) then
-                    bit_value <= '1';
-                    n := n + 1;
+                -- Vector: Determinar si tile está dentro de cuadrante del vector
+                elsif   ((x_comp > 0 and dx > 0 and dx <= x_comp) or
+                        (x_comp < 0 and dx < 0 and dx >= x_comp)) and
+                        ((y_comp > 0 and dy > 0 and dy <= y_comp) or
+                        (y_comp < 0 and dy < 0 and dy >= y_comp)) then
+                    -- Diagonal line
+                    -- Using: distance = |Ax + By + C| / sqrt(A² + B²)
+                    -- For line from origin (0,0) to (x_comp, y_comp):
+                    -- A = y_comp, B = -x_comp, C = 0
+                    
+                    -- Simplified to check if point is within threshold of line
+                    line_distance := abs(dy * x_comp - dx * y_comp);
+                    vector_length := x_comp * x_comp + y_comp * y_comp;
+                    
+                    -- Check if point is close enough to the line
+                    if line_distance * line_distance <= vector_length then
+                        bit_value <= '1';
+                    end if;
                 --Cualquier otro tile
                 else
                     bit_value <= '0';

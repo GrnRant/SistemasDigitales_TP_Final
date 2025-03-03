@@ -13,10 +13,7 @@ entity vector_rotator is
 		BAUD_RATE: integer := 115200;
 		CLOCK_RATE: integer := 125E6;
 		CORDIC_ITERATIONS: natural := 10;  --
-		CORDIC_CTL_CYCLES: natural := 125E6/50; --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
-		COORDS_MAX_TILE_VALUE: natural := 50; --Máximo valor que pueden tomar las coordenadas x e y en tiles
-		VGA_LINES: natural := 480;
-		VGA_PIXELS: natural := 640
+		CORDIC_CTL_CYCLES: natural := 125E6/50 --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
 	);
 	port(
 		--Write side inputs
@@ -91,7 +88,6 @@ begin
 			ang_chg => ang_chg,
 			x_cordic_out => x_o, 
 			y_cordic_out => y_o,
-			z_cordic_out => z_o,
 			cordic_busy => busy, 			
 			x_cordic_in => x_i,
 			y_cordic_in => y_i, 
@@ -102,7 +98,7 @@ begin
 		generic map(
 			N => N_CORDIC, 
 			ITERATIONS => CORDIC_ITERATIONS,
-			GAIN_DECIMALS => 5
+			GAIN_DECIMALS => 16
 			)
 		port map(
 			x0 => x_i,
@@ -122,11 +118,7 @@ begin
 		N_CORDIC => N_CORDIC,
 		N_ADDRESS => N_ADDRESS,
 		N_DATA => N_DATA,
-		MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3),
-		MAX_TILE_VAL => COORDS_MAX_TILE_VALUE,
-		L_T => VGA_LINES/4,
-		P_T => VGA_PIXELS/4
-	)
+		MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3)
 	port map(
 		rst => rst_pin,
 		clk => clk_pin,

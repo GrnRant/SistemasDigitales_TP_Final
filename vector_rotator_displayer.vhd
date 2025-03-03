@@ -12,16 +12,13 @@ entity vector_rotator_displayer is
 		N_DATA: natural := 16;
 		BAUD_RATE: integer := 115200;
 		CLOCK_RATE: integer := 125E6;
-		CORDIC_ITERATIONS: natural := 10;  --
-		CORDIC_CTL_CYCLES: natural := 125E6/50; --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
-		COORDS_MAX_TILE_VALUE: natural := 50; --Máximo valor que pueden tomar las coordenadas x e y en tiles
-		VGA_LINES: natural := 480;
-		VGA_PIXELS: natural := 640
+		CORDIC_ITERATIONS: natural := 16;  --
+		CORDIC_CTL_CYCLES: natural := 500 --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
 	);
 	port(
 		--Write side inputs
 		clk_pin: in std_logic;		-- Clock input (from pin)
-		rst_pin: in std_logic;		-- Active HIGH reset (from pin)
+		--rst_pin: in std_logic;		-- Active HIGH reset (from pin)
 		rxd_pin: in std_logic; 		-- Uart input
 		hsync: out std_logic;
 		vsync: out std_logic;
@@ -31,6 +28,8 @@ end;
 	
 
 architecture vector_rotator_displayer_arq of vector_rotator_displayer is
+	signal rst_pin: std_logic := '0';		
+	signal rst_vio: std_logic_vector(0 downto 0);
 	--UART/CMD_CTL
 	signal rx_data_rdy: std_logic;
 	signal rx_data: std_logic_vector(7 downto 0);
@@ -43,6 +42,8 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 	signal z_i: signed(N_CORDIC - 1 downto 0);
 	signal x_o: signed(N_CORDIC - 1 downto 0);
 	signal y_o: signed(N_CORDIC - 1 downto 0);
+	signal x_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal y_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
 	signal z_o: signed(N_CORDIC - 1 downto 0);
 	signal cordic_start: std_logic;
 	signal busy: std_logic;
@@ -57,18 +58,20 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
     signal rd_data_b_aux: std_logic_vector(N_DATA - 1 downto 0);
     --VGA_CTL
     signal clk_vga: std_logic;
-	signal clk_vga_aux: std_logic;
-	signal clk_vga_locked: std_logic;
+	--signal clk_vga_aux: std_logic;
+	--signal clk_vga_locked: std_logic;
+	signal vsync_ila: std_logic_vector(0 downto 0);
+	signal rgb_ila: std_logic_vector(2 downto 0);
 
     component vram is
     port (
       clka : in std_logic;
-      wea : in std_logic_vector(0 DOWNTO 0);
-      addra : in std_logic_vector(10 DOWNTO 0);
-      dina : in std_logic_vector(15 DOWNTO 0);
+      wea : in std_logic_vector(0 downto 0);
+      addra : in std_logic_vector(10 downto 0);
+      dina : in std_logic_vector(15 downto 0);
       clkb : in std_logic;
-      addrb : in std_logic_vector(10 DOWNTO 0);
-      doutb : out std_logic_vector(15 DOWNTO 0)
+      addrb : in std_logic_vector(10 downto 0);
+      doutb : out std_logic_vector(15 downto 0)
     );
     end component;
 
@@ -84,10 +87,34 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 	);
 	end component;
 
+	--Componentes para mediciones (VIO e ILA)
+	--VIO
+	component vio_0
+	port (
+		clk : in std_logic;
+		probe_in0 : in std_logic_vector(15 downto 0);
+		probe_in1 : in std_logic_vector(15 downto 0);
+		probe_out0 : out std_logic_vector(0 downto 0) 
+	);
+	end component;
+	--ILA
+	component ila_0
+	port (
+		clk : in std_logic;
+		probe0 : in std_logic_vector(2 downto 0);
+		probe1: in std_logic_vector(0 downto 0)
+	);
+	end component;
+
 begin
     wr_a_aux(0) <= wr_a;
     rd_data_b <= unsigned(rd_data_b_aux);
-	clk_vga <= clk_vga_aux when (clk_vga_locked = '0') else '0';
+	--clk_vga <= clk_vga_aux when (clk_vga_locked = '0') else '0';
+	rst_pin <= rst_vio(0);
+	x_o_aux <= std_logic_vector(x_o);
+	y_o_aux <= std_logic_vector(y_o);
+	rgb <= rgb_ila;
+	vsync <= vsync_ila(0);
 
 	UART : entity work.uart_top
 	generic map(
@@ -131,7 +158,6 @@ begin
 			ang_chg => ang_chg,
 			x_cordic_out => x_o, 
 			y_cordic_out => y_o,
-			z_cordic_out => z_o,
 			cordic_busy => busy, 			
 			x_cordic_in => x_i,
 			y_cordic_in => y_i, 
@@ -142,7 +168,7 @@ begin
 		generic map(
 			N => N_CORDIC, 
 			ITERATIONS => CORDIC_ITERATIONS,
-			GAIN_DECIMALS => 5
+			GAIN_DECIMALS => 8
 			)
 		port map(
 			x0 => x_i,
@@ -162,10 +188,7 @@ begin
 		N_CORDIC => N_CORDIC,
 		N_ADDRESS => N_ADDRESS,
 		N_DATA => N_DATA,
-		MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3),
-		MAX_TILE_VAL => COORDS_MAX_TILE_VALUE,
-		L_T => VGA_LINES/4,
-		P_T => VGA_PIXELS/4
+		MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3)
 	)
 	port map(
 		rst => rst_pin,
@@ -199,18 +222,33 @@ begin
 		rd_data => rd_data_b,
 		addr => addr_b,
 		hsync => hsync,
-		vsync => vsync,
-		rgb => rgb
+		vsync => vsync_ila(0),
+		rgb => rgb_ila
 	);
 	VGA_CLK_GEN: clk_wiz_vga
 	port map
 	(-- Clock in ports
 	-- Clock out ports
-	clk_50mhz => clk_vga_aux,
+	clk_50mhz => clk_vga, --clk_vga_aux,
 	-- Status and control signals
 	reset => rst_pin,
-	locked => clk_vga_locked,
+	locked => open,
 	clk_in => clk_pin
+	);
+
+	--Para mediciones (VIO e ILA)
+	VIO_RESET_CORDIC: vio_0
+	port map(
+		clk => clk_pin,
+		probe_in0 => x_o_aux,
+		probe_in1 => y_o_aux,
+		probe_out0 => rst_vio
+	);
+	ILA_VGA_RGB: ila_0
+	port map(
+		clk => clk_pin,
+		probe0 => rgb_ila,
+		probe1 => vsync_ila
 	);
 	
 end;

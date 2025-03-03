@@ -97,25 +97,26 @@ begin
 	
 
 	-- Generacion de las senales de sincronismo
-	process (clk, rst)
+	process (clk)
 	begin
-		if rst = '1' then
-			vsync <= '0';
-			hsync <= '0';
-		elsif rising_edge(clk) then
-			-- Sincronismo horizontal
-			if (h_count >= (HD + HF) and (h_count <= (HD + HF + HR - 1))) then
-				hsync <= P;
+		if rising_edge(clk) then
+			if rst = '1' then
+				vsync <= '0';
+				hsync <= '0';
 			else
-				hsync <= not P;
-			end if;
-			-- Sincronismo vertical
-			if (v_count >= (VD + VF) and (v_count <= (VD + VF + VR - 1))) then
-				vsync <= P;
-			else
-				vsync <= not P;
-			end if;
-				
+				-- Sincronismo horizontal
+				if (h_count >= (HD + HF) and (h_count <= (HD + HF + HR - 1))) then
+					hsync <= P;
+				else
+					hsync <= not P;
+				end if;
+				-- Sincronismo vertical
+				if (v_count >= (VD + VF) and (v_count <= (VD + VF + VR - 1))) then
+					vsync <= P;
+				else
+					vsync <= not P;
+				end if;
+			end if;				
 		end if;
 	end process;
 	
