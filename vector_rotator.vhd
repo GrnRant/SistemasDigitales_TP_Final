@@ -98,7 +98,7 @@ begin
 		generic map(
 			N => N_CORDIC, 
 			ITERATIONS => CORDIC_ITERATIONS,
-			GAIN_DECIMALS => 16
+			GAIN_DECIMALS => 10
 			)
 		port map(
 			x0 => x_i,
@@ -119,6 +119,7 @@ begin
 		N_ADDRESS => N_ADDRESS,
 		N_DATA => N_DATA,
 		MAX_CORDIC_COMP_VALUE => 2**(N_CORDIC-3)
+	)
 	port map(
 		rst => rst_pin,
 		clk => clk_pin,

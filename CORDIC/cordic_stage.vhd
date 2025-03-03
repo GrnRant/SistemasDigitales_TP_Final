@@ -11,7 +11,7 @@ entity cordic_stage is
         y_out : out signed(NC-1 downto 0);  --Salida de etapa cordic
         z_out : out signed(NC-1 downto 0);  --Salida de etapa cordic
         beta : in signed(NC-1 downto 0);    --Beta de la etapa (depende del número de etapa o iteración)
-        shift : in integer;                 --Cantidad de desplazamientos de la etapa (depende del número de etapa o iteración)
+        shift : in natural;                 --Cantidad de desplazamientos de la etapa (depende del número de etapa o iteración)
         mode : in std_logic                 --Modo de operacion (rotación => '1', vector => '0')
     );
 end cordic_stage;

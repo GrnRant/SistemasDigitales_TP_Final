@@ -36,6 +36,5 @@ begin
         end if;
     end process;
     --Salida
-    count <= 0 when rst = '1' else
-        aux;
+    count <= 0 when rst = '1' else aux;
 end counter_arch;

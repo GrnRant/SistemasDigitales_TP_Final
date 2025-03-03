@@ -168,7 +168,7 @@ begin
 		generic map(
 			N => N_CORDIC, 
 			ITERATIONS => CORDIC_ITERATIONS,
-			GAIN_DECIMALS => 8
+			GAIN_DECIMALS => 10
 			)
 		port map(
 			x0 => x_i,

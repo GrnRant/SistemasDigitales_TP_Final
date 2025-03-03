@@ -18,7 +18,7 @@ architecture rot_c_a_tb_arq of rot_c_a_tb is
     constant N_ADDRESS: natural := 11;
     constant N_DATA: natural := 16;
     constant CORDIC_ITERATIONS: natural := 15;
-    constant CORDIC_CTL_CYCLES: natural := 500
+    constant CORDIC_CTL_CYCLES: natural := 500;
 
     signal clk_tb : std_logic := '0';
     signal rst_tb : std_logic := '1';
@@ -335,6 +335,7 @@ begin
 		CLOCK_RATE => CLOCK_RATE,
 		CORDIC_ITERATIONS => CORDIC_ITERATIONS, 
 		CORDIC_CTL_CYCLES => CORDIC_CTL_CYCLES
+    )
 	port map(
 		clk_pin => clk_tb,
 		rst_pin => rst_tb,
