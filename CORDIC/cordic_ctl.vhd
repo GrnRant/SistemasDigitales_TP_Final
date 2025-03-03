@@ -36,6 +36,10 @@ architecture cordic_ctl_arq of cordic_ctl is
 	signal actual_ang : signed(N - 1 downto 0) := (others => '0');
 	signal ang_chg_trigger : std_logic;
 	signal cordic_busy_prev : std_logic;
+	--Para corregir el módulo del vector cuando pasa por el eje y con y positivo
+	signal x_out_act: signed(N - 1 downto 0);
+	signal x_out_pre: signed(N - 1 downto 0) := (others => '0');
+	signal y_out_act: signed(N - 1 downto 0);
 	constant X_INIT : signed(N - 1 downto 0) := to_signed(0, N); --Posición inicial en Y es 0.75 del máximo valor positivo que puede tener
 	constant Y_INIT : signed(N - 1 downto 0) := to_signed(MAX_CORDIC_COMP_VALUE, N); --Posición inicial el máximo valor positivo que puede tener (se toma en cuenta que hay que realizar cuentas también)
 	constant ANG_ZERO : signed(N - 1 downto 0) := to_signed(0, N); --Ángulo igual a cero
@@ -45,7 +49,6 @@ architecture cordic_ctl_arq of cordic_ctl is
 
 begin
 	CORDIC_CTL_CMD_EXE: process(clk)
-
 	begin
 		if rising_edge(clk) then
 			cordic_busy_prev <= cordic_busy;
@@ -60,6 +63,9 @@ begin
 				cordic_start <= '0';
 				cmd_cycles_count <= CORDIC_CYCLES;
 				cordic_busy_prev <= '0';
+				x_out_pre <= X_INIT;
+				x_out_act <= X_INIT;
+				y_out_act <= Y_INIT;
 			end if;
 
 			--Detección de trigger de nuevo ángulo
@@ -85,10 +91,26 @@ begin
 					end if;
 				--Si comando giro continuo antihorario
 				when CMD_C_A =>
+					--Para corregir acumulación de error en módulo del vector
+					if (x_out_act <= to_signed(0, N)) and (x_out_pre > to_signed(0, N)) and (y_out_act > to_signed(0, N)) then
+						x_cordic_in <= X_INIT;
+						y_cordic_in <= Y_INIT;
+						x_out_pre <= X_INIT;
+						x_out_act <= X_INIT;
+						y_out_act <= Y_INIT;
+					end if;
 					actual_ang <= ANG_STEP;
 					z_cordic_in <= ANG_STEP;
 				--Si comando giro continuo horario
 				when CMD_C_H =>
+					--Para corregir acumulación de error en módulo del vector
+					if (x_out_act >= to_signed(0, N)) and (x_out_pre < to_signed(0, N)) and (y_out_act > to_signed(0, N)) then
+						x_cordic_in <= X_INIT;
+						y_cordic_in <= Y_INIT;
+						x_out_pre <= X_INIT;
+						x_out_act <= X_INIT;
+						y_out_act <= Y_INIT;
+					end if;
 					actual_ang <= ANG_STEP;
 					z_cordic_in <= ANG_STEP_NEG;
 				--Si no hay ningún comando
@@ -113,9 +135,13 @@ begin
 						else
 							actual_ang <= ANG_ZERO;
 						end if;
+						if x_out_act /= X_INIT then
+							x_out_pre <= x_out_act;
+						end if;
+							x_out_act <= x_cordic_out;
+							y_out_act <= y_cordic_out;
 					end if;
 				end if;	
-
 		end if;
 	end process;
 end;

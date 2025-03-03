@@ -13,7 +13,7 @@ entity vector_rotator_displayer is
 		BAUD_RATE: integer := 115200;
 		CLOCK_RATE: integer := 125E6;
 		CORDIC_ITERATIONS: natural := 16;  --
-		CORDIC_CTL_CYCLES: natural := 20000 --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
+		CORDIC_CTL_CYCLES: natural := 125E6/50-16 --Cantidad de ciclos que espera el cordic_ctl para próxima rotación
 	);
 	port(
 		--Write side inputs
@@ -63,8 +63,8 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
     signal clk_vga: std_logic;
 	--signal clk_vga_aux: std_logic;
 	--signal clk_vga_locked: std_logic;
-	signal vsync_ila: std_logic_vector(0 downto 0);
-	signal rgb_ila: std_logic_vector(2 downto 0);
+	-- signal vsync_ila: std_logic_vector(0 downto 0);
+	-- signal rgb_ila: std_logic_vector(2 downto 0);
 
     component vram is
     port (
@@ -97,18 +97,7 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 		clk : in std_logic;
 		probe_in0 : in std_logic_vector(15 downto 0);
 		probe_in1 : in std_logic_vector(15 downto 0);
-		probe_in2 : in std_logic_vector(15 downto 0);
-		probe_in3 : in std_logic_vector(15 downto 0);
-		probe_in4 : in std_logic_vector(15 downto 0);
 		probe_out0 : out std_logic_vector(0 downto 0) 
-	);
-	end component;
-	--ILA
-	component ila_0
-	port (
-		clk : in std_logic;
-		probe0 : in std_logic_vector(2 downto 0);
-		probe1: in std_logic_vector(0 downto 0)
 	);
 	end component;
 
@@ -119,11 +108,8 @@ begin
 	rst_pin <= rst_vio(0);
 	x_o_aux <= std_logic_vector(x_o);
 	y_o_aux <= std_logic_vector(y_o);
-	x_i_aux <= std_logic_vector(x_i);
-	y_i_aux <= std_logic_vector(y_i);
-	z_i_aux <= std_logic_vector(z_i);
-	rgb <= rgb_ila;
-	vsync <= vsync_ila(0);
+	-- rgb <= rgb_ila;
+	-- vsync <= vsync_ila(0);
 
 	UART : entity work.uart_top
 	generic map(
@@ -231,8 +217,8 @@ begin
 		rd_data => rd_data_b,
 		addr => addr_b,
 		hsync => hsync,
-		vsync => vsync_ila(0),
-		rgb => rgb_ila
+		vsync => vsync, --vsync_ila(0),
+		rgb => rgb --rgb_ila
 	);
 	VGA_CLK_GEN: clk_wiz_vga
 	port map
@@ -251,16 +237,13 @@ begin
 		clk => clk_pin,
 		probe_in0 => x_o_aux,
 		probe_in1 => y_o_aux,
-		probe_in2 => x_i_aux,
-		probe_in3 => y_i_aux,
-		probe_in4 => z_i_aux,
 		probe_out0 => rst_vio
 	);
-	ILA_VGA_RGB: ila_0
-	port map(
-		clk => clk_pin,
-		probe0 => rgb_ila,
-		probe1 => vsync_ila
-	);
+	-- ILA_VGA_RGB: ila_0
+	-- port map(
+	-- 	clk => clk_pin,
+	-- 	probe0 => rgb_ila,
+	-- 	probe1 => vsync_ila
+	-- );
 	
 end;
