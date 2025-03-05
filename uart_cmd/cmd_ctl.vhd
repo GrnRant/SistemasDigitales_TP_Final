@@ -12,12 +12,12 @@ entity cmd_ctl is
 		N : natural := 16
 	);
 	port (
-		-- Entradas
-		clk_pin : in std_logic; -- Clock input (from pin)
-		rst_pin : in std_logic; -- Active HIGH reset (from pin)
-		rx_data : in std_logic_vector(7 downto 0); -- Data output of uart_rx
-		rx_data_rdy : in std_logic; -- Data ready output of uart_rx
-		-- Salidas
+		clk_pin : in std_logic; 
+		rst_pin : in std_logic; 
+		--Inputs de la UART
+		rx_data : in std_logic_vector(7 downto 0); -- Data output de uart_rx
+		rx_data_rdy : in std_logic; -- Data ready output de uart_rx
+		--Outputs de cmd_ctl
 		cmd_out : out cordic_ctl_cmds;
 		ang_out : out signed(N - 1 downto 0);
 		ang_chg : out std_logic

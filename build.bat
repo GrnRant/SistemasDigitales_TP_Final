@@ -38,14 +38,13 @@ ghdl -a --workdir=build rot_a_ang_tb.vhd
 ghdl -a --workdir=build rot_c_h_tb.vhd
 ghdl -a --workdir=build rot_c_a_tb.vhd
 
-
 @REM Run
-@REM ghdl -r --workdir=build rot_a_ang_tb --vcd=build/rot_a_ang_tb.vcd
+ghdl -r --workdir=build rot_a_ang_tb --vcd=build/rot_a_ang_tb.vcd
 ghdl -r --workdir=build rot_c_h_tb --vcd=build/rot_c_h_tb.vcd
-@REM ghdl -r --workdir=build rot_c_a_tb --vcd=build/rot_c_a_tb.vcd
+ghdl -r --workdir=build rot_c_a_tb --vcd=build/rot_c_a_tb.vcd
 
 @REM Abrir simulación
 cd build
-@REM gtkwave rot_a_ang_tb.vcd
+gtkwave rot_a_ang_tb.vcd
 gtkwave rot_c_h_tb.vcd
-@REM gtkwave rot_c_a_tb.vcd
+gtkwave rot_c_a_tb.vcd

@@ -45,8 +45,8 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 	signal x_i_aux: std_logic_vector(N_CORDIC - 1 downto 0);
 	signal y_i_aux: std_logic_vector(N_CORDIC - 1 downto 0);
 	signal z_i_aux: std_logic_vector(N_CORDIC - 1 downto 0);
-	signal y_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
-	signal x_o_aux: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal y_o_vio: std_logic_vector(N_CORDIC - 1 downto 0);
+	signal x_o_vio: std_logic_vector(N_CORDIC - 1 downto 0);
 	signal z_o: signed(N_CORDIC - 1 downto 0);
 	signal cordic_start: std_logic;
 	signal busy: std_logic;
@@ -63,8 +63,10 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
     signal clk_vga: std_logic;
 	--signal clk_vga_aux: std_logic;
 	--signal clk_vga_locked: std_logic;
-	-- signal vsync_ila: std_logic_vector(0 downto 0);
-	-- signal rgb_ila: std_logic_vector(2 downto 0);
+	signal rgb_ila: std_logic_vector(2 downto 0);
+	signal hsync_ila: std_logic_vector(0 downto 0);
+	signal vsync_ila: std_logic_vector(0 downto 0);
+	signal clk_ila: std_logic;
 
     component vram is
     port (
@@ -78,16 +80,17 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
     );
     end component;
 
-	component clk_wiz_vga
+	component clk_wiz_0
 	port
-	(-- Clock in ports
-	-- Clock out ports
-	clk_50mhz          : out    std_logic;
-	-- Status and control signals
-	reset             : in     std_logic;
-	locked            : out    std_logic;
-	clk_in           : in     std_logic
-	);
+	 (-- Clock in ports
+	  -- Clock out ports
+	  clk_50mhz          : out    std_logic;
+	  clk_25mhz          : out    std_logic;
+	  -- Status and control signals
+	  reset             : in     std_logic;
+	  locked            : out    std_logic;
+	  clk_in1           : in     std_logic
+	 );
 	end component;
 
 	--Componentes para mediciones (VIO e ILA)
@@ -100,16 +103,26 @@ architecture vector_rotator_displayer_arq of vector_rotator_displayer is
 		probe_out0 : out std_logic_vector(0 downto 0) 
 	);
 	end component;
+	--ILA
+	component ila_0
+	port (
+		clk : in std_logic;
+		probe0 : in std_logic_vector(0 downto 0);
+		probe1: in std_logic_vector(0 downto 0);
+        probe2: in std_logic_vector(2 downto 0)
+	);
+	end component;
 
 begin
     wr_a_aux(0) <= wr_a;
     rd_data_b <= unsigned(rd_data_b_aux);
 	--clk_vga <= clk_vga_aux when (clk_vga_locked = '0') else '0';
 	rst_pin <= rst_vio(0);
-	x_o_aux <= std_logic_vector(x_o);
-	y_o_aux <= std_logic_vector(y_o);
-	-- rgb <= rgb_ila;
-	-- vsync <= vsync_ila(0);
+	x_o_vio <= std_logic_vector(x_o);
+	y_o_vio <= std_logic_vector(y_o);
+	rgb <= rgb_ila;
+	vsync <= vsync_ila(0);
+	hsync <= hsync_ila(0);
 
 	UART : entity work.uart_top
 	generic map(
@@ -216,34 +229,35 @@ begin
 		rst => rst_pin,
 		rd_data => rd_data_b,
 		addr => addr_b,
-		hsync => hsync,
-		vsync => vsync, --vsync_ila(0),
-		rgb => rgb --rgb_ila
+		hsync => hsync_ila(0),
+		vsync => vsync_ila(0),
+		rgb => rgb_ila
 	);
-	VGA_CLK_GEN: clk_wiz_vga
-	port map
-	(-- Clock in ports
-	-- Clock out ports
-	clk_50mhz => clk_vga, --clk_vga_aux,
-	-- Status and control signals
-	reset => rst_pin,
-	locked => open,
-	clk_in => clk_pin
+	VGA_CLK_GEN: clk_wiz_0
+	port map(   
+		-- Clock in ports
+		-- Clock out ports
+		clk_50mhz => clk_vga, --clk_vga_aux,
+		clk_25mhz => clk_ila,
+		-- Status and control signals
+		reset => rst_pin,
+		locked => open,
+		clk_in1 => clk_pin
 	);
-
+	
 	--Para mediciones (VIO e ILA)
 	VIO_RESET_CORDIC: vio_0
 	port map(
 		clk => clk_pin,
-		probe_in0 => x_o_aux,
-		probe_in1 => y_o_aux,
+		probe_in0 => x_o_vio,
+		probe_in1 => y_o_vio,
 		probe_out0 => rst_vio
 	);
-	-- ILA_VGA_RGB: ila_0
-	-- port map(
-	-- 	clk => clk_pin,
-	-- 	probe0 => rgb_ila,
-	-- 	probe1 => vsync_ila
-	-- );
-	
+	ILA_VGA_RGB: ila_0
+	port map(
+		clk => clk_ila,
+		probe0 => vsync_ila,
+		probe1 => hsync_ila,
+		probe2 => rgb_ila
+	);	
 end;

@@ -1,7 +1,3 @@
--- En este archivo se encuentran el CORDIC con sus dos respectivas arquitecturas,
--- la enrollada ("cordic_rolled") y la desenrollada con pipeling ("cordic_unrolled").
--- Además cada arquitectura tiene su precordic, falta postcordic, que es la división por la ganancia
--- de cordic del resultado, por ejemplo con 15 iteraciones se debe dividir todo por 1.64 aproximadamente.
 -- Para el cordic_rolled el 'start' se debe poner en '1' y luego en '0', y ahí inicia.
 library IEEE;
 use IEEE.std_logic_1164.all;
@@ -10,8 +6,8 @@ use work.utils.all;
 
 entity cordic is
     --N cantidad de bits para cuentas, ITERATIONS cantidad de iteraciones, N_CONT bits del contador elegido 
-    --en función de la cantidad de ITERATIONS (no debe superares) y FRAC cantidad de decimales en cuentas
-    --(es decir cantidad de bits de la parte fraccionaria de los números en binario)  
+    --en función de la cantidad de ITERATIONS (no debe superares) y GAIN_DECIMALS cantidad de decimales binarios
+    --que se toman de la ganancia del cordic.
     generic(N: natural := 16; N_CONT : natural := 4; ITERATIONS: natural := 15; GAIN_DECIMALS: natural := 16);
     port(x0 : in signed(N-1 downto 0);  --Valor de entrada al cordic
         y0 : in signed(N-1 downto 0);   --Valor de entrada al cordic
@@ -45,25 +41,8 @@ architecture cordic_rolled_arch of cordic is
     signal beta : signed(N-1 downto 0); --Variable auxiliar
     signal count_en : std_logic; --Variable auxiliar para habilitación del contador
     constant gain_scaled : integer := integer(cordic_gain(ITERATIONS)*2.0**GAIN_DECIMALS); --Ganancia de CORDIC
-
-    --ILA
-    signal x_in_ila : std_logic_vector(15 downto 0);   --Entrada a etapa cordic
-    signal y_in_ila : std_logic_vector(15 downto 0);   --Entrada a etapa cordic
-    signal z_in_ila : std_logic_vector(15 downto 0);   --Entrada a etapa cordic
-    component ila_0
-	port (
-		clk : in std_logic;
-		probe0 : in std_logic_vector(15 downto 0);
-		probe1: in std_logic_vector(15 downto 0);
-        probe2: in std_logic_vector(15 downto 0)
-	);
-	end component;
     
-begin
-    x_in_ila <= std_logic_vector(x_in);
-    y_in_ila <= std_logic_vector(y_in);
-    z_in_ila <= std_logic_vector(z_in);
-    
+begin    
     --PRECORDIC
     PRECORDIC: entity work.precordic
     generic map(NP => N)
@@ -160,14 +139,5 @@ y_in <= y_pre when i = 0 else y_act;
 z_in <= z_pre when i = 0 else z_act;
 
 busy <= count_en;
-
---ILA
-ILA_CORDIC: ila_0
-port map(
-    clk => clk,
-    probe0 => x_in_ila,
-    probe1 => y_in_ila,
-    probe2 => z_in_ila
-);
 
 end cordic_rolled_arch;

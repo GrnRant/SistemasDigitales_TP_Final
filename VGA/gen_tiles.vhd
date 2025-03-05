@@ -40,8 +40,7 @@ architecture gen_tiles_arch of gen_tiles is
 begin
     P_GEN_TILES_MAIN: process(clk)
     variable dx, dy : integer;
-    variable line_distance : integer;
-    variable vector_length : integer;
+    variable cross_product : integer;
     begin
         if rising_edge(clk) then
             --Reset
@@ -75,17 +74,15 @@ begin
                         (x_comp < 0 and dx < 0 and dx >= x_comp)) and
                         ((y_comp > 0 and dy > 0 and dy <= y_comp) or
                         (y_comp < 0 and dy < 0 and dy >= y_comp)) then
-                    -- Diagonal line
-                    -- Using: distance = |Ax + By + C| / sqrt(A² + B²)
-                    -- For line from origin (0,0) to (x_comp, y_comp):
-                    -- A = y_comp, B = -x_comp, C = 0
+                    -- Línea diagonal
+                    -- Si punto pertenece a línea de vector, se debería cumplir
+                    -- que y_comp * dx - x_comp * dy = 0
                     
-                    -- Simplified to check if point is within threshold of line
-                    line_distance := abs(dy * x_comp - dx * y_comp);
-                    vector_length := x_comp * x_comp + y_comp * y_comp;
-                    
-                    -- Check if point is close enough to the line
-                    if line_distance * line_distance <= vector_length then
+                    --Chequeo si la línea está dentro del umbral
+                    cross_product := y_comp * dx - x_comp * dy;
+
+                    --Chequear si tile está suficientemente cerca a línea (distancia al tile menor a 1)
+                    if cross_product = 0 then
                         bit_value <= '1';
                     end if;
                 --Cualquier otro tile
